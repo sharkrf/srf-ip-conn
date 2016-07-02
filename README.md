@@ -76,11 +76,11 @@ The used byte order is big-endian.
 Every packet contains this header. The payload follows the header. Payload is optional, depends on the Packet Type.
 
 ```C
-typedef struct __attribute__((packed)) srf_ip_conn_hdr {
+typedef struct __attribute__((packed)) {
 	char protocol_id[6];				// "SRFIPC"
 	uint8_t version;					// 0x00
 	srf_ip_conn_pkt_type_t pkt_type;	// Packet type
-} srf_ip_conn_hdr_t;					// 8 bytes total
+} srf_ip_conn_header_t;					// 8 bytes total
 ```
 
 #### Packet Types
@@ -109,7 +109,7 @@ typedef uint8_t srf_ip_conn_pkt_type_t;
 
 ```C
 typedef struct __attribute__((packed)) srf_ip_conn_login {
-	uint32_t rpt_id;	// Repeater ID
+	uint32_t client_id;
 } srf_ip_conn_login_t;	// 4 bytes total
 ```
 
@@ -160,7 +160,7 @@ typedef struct __attribute__((packed)) srf_ip_conn_data_raw {
 	uint8_t length;										// Length of raw data in bytes
 	uint8_t data[120];									// Raw data
 	uint8_t hmac[32];									// Hashed Message Auth Code, sha256 ( token + secret password + all fields of this struct except hmac )
-} srf_ip_conn_data_raw_t;								// 158 bytes total
+} srf_ip_conn_data_raw_t;								// 159 bytes total
 ```
 
 #### DMR Data
@@ -243,18 +243,17 @@ typedef struct __attribute__((packed)) srf_ip_conn_dat_c4fm {
 	srf_ip_conn_data_c4fm_packet_type_t packet_type;
     uint8_t data[120];                                   // Raw C4FM packet data
     uint8_t hmac[32];                                    // Hashed Message Auth Code, sha256 ( token + secret password + all fields of this struct except hmac )
-} srf_ip_conn_data_c4fm_t;
+} srf_ip_conn_data_c4fm_t;                               // 182 bytes total
 ```
 
 ##### Packet Types
 
 ```C
-typedef uint8_t srf_ip_conn_data_c4fm_packet_type_t;
-
 #define	SRF_IP_CONN_DATA_C4FM_PACKET_TYPE_HEADER         0x00
 #define	SRF_IP_CONN_DATA_C4FM_PACKET_TYPE_VDMODE1        0x01
 #define	SRF_IP_CONN_DATA_C4FM_PACKET_TYPE_VDMODE2        0x02
 #define	SRF_IP_CONN_DATA_C4FM_PACKET_TYPE_DATA_FR        0x03
 #define	SRF_IP_CONN_DATA_C4FM_PACKET_TYPE_VOICE_FR       0x04
 #define	SRF_IP_CONN_DATA_C4FM_PACKET_TYPE_TERMINATOR     0x05
+typedef uint8_t srf_ip_conn_data_c4fm_packet_type_t;
 ```
