@@ -86,6 +86,8 @@ typedef struct __attribute__((packed)) srf_ip_conn_hdr {
 #### Packet Types
 
 ```C
+typedef uint8_t srf_ip_conn_pkt_type_t;
+
 #define SRF_IP_CONN_PKT_TYPE_LOGIN                0x00  // No payload
 #define SRF_IP_CONN_PKT_TYPE_TOKEN                0x01  // Payload: srf_ip_conn_token_t 
 #define SRF_IP_CONN_PKT_TYPE_AUTH                 0x02  // Payload: srf_ip_conn_auth_t
@@ -98,8 +100,7 @@ typedef struct __attribute__((packed)) srf_ip_conn_hdr {
 #define SRF_IP_CONN_PKT_TYPE_DATA_RAW             0x09  // Payload: srf_ip_conn_data_raw_t
 #define SRF_IP_CONN_PKT_TYPE_DATA_DMR             0x0a  // Payload: srf_ip_conn_data_dmr_t
 #define SRF_IP_CONN_PKT_TYPE_DATA_DSTAR           0x0b  // Payload: srf_ip_conn_data_dstar_t
-#define SRF_IP_CONN_PKT_TYPE_DATA_YSF             0x0c  // Payload: srf_ip_conn_data_ysf_t
-typedef uint8_t srf_ip_conn_pkt_type_t;
+#define SRF_IP_CONN_PKT_TYPE_DATA_C4FM            0x0c  // Payload: srf_ip_conn_data_c4fm_t
 ```
 
 ### Payload Types
@@ -153,28 +154,28 @@ typedef struct __attribute__((packed)) srf_ip_conn_config {
 
 ```C
 typedef struct __attribute__((packed)) srf_ip_conn_data_raw {
-	uint8_t version;									// 0x00
+	uint8_t version;                                     					// 0x00
 	uint32_t seq_no;									// Sequence number (starts from 0 and incremented for every data packet for the whole connection)
 	int8_t rssi_dbm;									// Received signal strength
 	uint8_t length;										// Length of raw data in bytes
-	uint8_t data[128];									// Raw data
+	uint8_t data[120];									// Raw data
 	uint8_t hmac[32];									// Hashed Message Auth Code, sha256 ( token + secret password + all fields of this struct except hmac )
-} srf_ip_conn_data_raw_t;								// 166 bytes total
+} srf_ip_conn_data_raw_t;								// 158 bytes total
 ```
 
 #### DMR Data
 
 ```C
 typedef struct __attribute__((packed)) srf_ip_conn_data_dmr {
-	uint8_t version;									// 0x00
+	uint8_t version;                                     					// 0x00
 	uint32_t seq_no;									// Sequence number (starts from 0 and incremented for every data packet for the whole connection)
 	uint8_t dst_id[3];									// Destination DMR ID
 	uint8_t src_id[3];									// Source DMR ID
-	uint8_t slot								: 1;	// TDMA slot 0 / TDMA slot 1
+	uint8_t tdma_channel						: 1;
 	uint8_t call_type							: 1;	// Private = 0; Group = 1
 	uint8_t reserved							: 6;
-	srf_ip_conn_data_dmr_slot_type_t slot_type	: 4;	// Slot type
-	uint8_t color_code							: 4;	// Color code
+	srf_ip_conn_data_dmr_slot_type_t slot_type	: 4;
+	uint8_t color_code							: 4;
 	int8_t rssi_dbm;									// Received signal strength
 	uint8_t data[33];									// Raw DMR data
 	uint8_t hmac[32];									// Hashed Message Auth Code, sha256 ( token + secret password + all fields of this struct except hmac )
@@ -184,11 +185,13 @@ typedef struct __attribute__((packed)) srf_ip_conn_data_dmr {
 ##### Slot Types
 
 ```C
+typedef uint8_t srf_ip_conn_data_dmr_slot_type_t;
+
 #define	SRF_IP_CONN_DATA_DMR_SLOT_TYPE_UNKNOWN                  0x00
-#define	SRF_IP_CONN_DATA_DMR_SLOT_TYPE_VOICE_LC_HDR             0x01
+#define	SRF_IP_CONN_DATA_DMR_SLOT_TYPE_VOICE_LC_HEADER          0x01
 #define	SRF_IP_CONN_DATA_DMR_SLOT_TYPE_TERMINATOR_WITH_LC       0x02
 #define	SRF_IP_CONN_DATA_DMR_SLOT_TYPE_CSBK                     0x03
-#define	SRF_IP_CONN_DATA_DMR_SLOT_TYPE_DATA_HDR                 0x04
+#define	SRF_IP_CONN_DATA_DMR_SLOT_TYPE_DATA_HEADER              0x04
 #define	SRF_IP_CONN_DATA_DMR_SLOT_TYPE_RATE_12_DATA             0x05
 #define	SRF_IP_CONN_DATA_DMR_SLOT_TYPE_RATE_34_DATA             0x06
 #define	SRF_IP_CONN_DATA_DMR_SLOT_TYPE_VOICE_DATA_A             0x0a
@@ -197,40 +200,61 @@ typedef struct __attribute__((packed)) srf_ip_conn_data_dmr {
 #define	SRF_IP_CONN_DATA_DMR_SLOT_TYPE_VOICE_DATA_D             0x0d
 #define	SRF_IP_CONN_DATA_DMR_SLOT_TYPE_VOICE_DATA_E             0x0e
 #define	SRF_IP_CONN_DATA_DMR_SLOT_TYPE_VOICE_DATA_F             0x0f
-typedef uint8_t srf_ip_conn_data_dmr_slot_type_t;
 ```
 
 #### D-STAR Data
 
 ```C
 typedef struct __attribute__((packed)) srf_ip_conn_data_dstar {
-	uint8_t version;										// 0x00
-    uint32_t seq_no;										// Sequence number (starts from 0 and incremented for every data packet for the whole connection)
-    uint8_t dst_callsign[9];								// Destination callsign, null-terminated
-    uint8_t src_callsign[9];								// Source callsign, null-terminated
-    uint8_t src_callsign_suffix[5];							// Source callsign suffix, null-terminated
-    int8_t rssi_dbm;										// Received signal strength
-    uint8_t packet_count;									// Number of D-STAR packets in current packet, max 9
-    srf_ip_conn_data_dstar_packet_type_t packet_types[9];	// Type of each packet in the current packet
-    uint8_t data[108];										// Raw D-STAR packet data (12 bytes * 9 packets)
-    uint8_t hmac[32];										// Hashed Message Auth Code, sha256 ( token + secret password + all fields of this struct except hmac )
-} srf_ip_conn_data_dstar_t;									// 178 bytes total
+    uint8_t version;                                     // 0x00
+    uint32_t seq_no;                                     // Sequence number (starts from 0 and incremented for every data packet for the whole connection)
+    uint8_t dst_callsign[9];                             // Destination callsign, null-terminated
+    uint8_t src_callsign[9];                             // Source callsign, null-terminated
+    uint8_t src_callsign_suffix[5];                      // Source callsign suffix, null-terminated
+    int8_t rssi_dbm;                                     // Received signal strength
+    uint8_t packet_count;                                // Number of D-STAR packets in current packet, max 9
+    srf_ip_conn_data_dstar_packet_type_t packet_types[9] // Type of each packet in the current packet
+    uint8_t data[108];                                   // Raw D-STAR packet data (12 bytes * 9 packets)
+    uint8_t hmac[32];                                    // Hashed Message Auth Code, sha256 ( token + secret password + all fields of this struct except hmac )
+} srf_ip_conn_data_dstar_t;                              // 178 bytes total
 ```
 
-##### Packet types
+##### Packet Types
 
 ```C
+typedef uint8_t srf_ip_conn_data_dstar_packet_type_t;
+
 #define SRF_IP_CONN_DATA_DSTAR_PACKET_TYPE_DATA          0x00
 #define SRF_IP_CONN_DATA_DSTAR_PACKET_TYPE_CALL_START    0x01
 #define SRF_IP_CONN_DATA_DSTAR_PACKET_TYPE_CALL_END      0x02
-typedef uint8_t srf_ip_conn_data_dstar_packet_type_t;
 ```
 
-#### Yaesu System Fusion Data *(TBD)*
+#### C4FM Data
 
 ```C
-typedef struct __attribute__((packed)) srf_ip_conn_dat_ysf {
-	// TBD
-} srf_ip_conn_data_ysf_t;
+typedef struct __attribute__((packed)) srf_ip_conn_dat_c4fm {
+    uint8_t version;                                     // 0x00
+    uint32_t seq_no;                                     // Sequence number (starts from 0 and incremented for every data packet for the whole connection)
+    uint8_t dst_callsign[11];                            // Destination callsign, null-terminated
+    uint8_t src_callsign[11];                            // Source callsign, null-terminated
+	uint8_t call_type							: 1;     // Private = 0; Group = 1
+	uint8_t reserved							: 7;
+    int8_t rssi_dbm;                                     // Received signal strength
+	srf_ip_conn_data_c4fm_packet_type_t packet_type;
+    uint8_t data[120];                                   // Raw C4FM packet data
+    uint8_t hmac[32];                                    // Hashed Message Auth Code, sha256 ( token + secret password + all fields of this struct except hmac )
+} srf_ip_conn_data_c4fm_t;
 ```
 
+##### Packet Types
+
+```C
+typedef uint8_t srf_ip_conn_data_c4fm_packet_type_t;
+
+#define	SRF_IP_CONN_DATA_C4FM_PACKET_TYPE_HEADER         0x00
+#define	SRF_IP_CONN_DATA_C4FM_PACKET_TYPE_VDMODE1        0x01
+#define	SRF_IP_CONN_DATA_C4FM_PACKET_TYPE_VDMODE2        0x02
+#define	SRF_IP_CONN_DATA_C4FM_PACKET_TYPE_DATA_FR        0x03
+#define	SRF_IP_CONN_DATA_C4FM_PACKET_TYPE_VOICE_FR       0x04
+#define	SRF_IP_CONN_DATA_C4FM_PACKET_TYPE_TERMINATOR     0x05
+```
