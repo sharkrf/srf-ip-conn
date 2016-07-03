@@ -1,4 +1,5 @@
 #include "packet.h"
+#include "server-sock.h"
 
 #include <stdlib.h>
 
@@ -7,13 +8,13 @@ static struct {
 	uint8_t given_token[8];
 } packet_new_connection_data;
 
-static void packet_process_login(uint8_t *buf, uint16_t buflen) {
-	srf_ip_conn_login_t *packet = buf+sizeof(srf_ip_conn_header_t);
+static void packet_process_login(void) {
+	srf_ip_conn_login_t *packet = (srf_ip_conn_login_t *)(server_sock_received_packet.buf+sizeof(srf_ip_conn_header_t));
 	srf_ip_conn_token_t answer;
 	uint8_t i;
 
-	if (buflen != sizeof(srf_ip_conn_header_t)+sizeof(srf_ip_conn_login_t)) {
-		printf("  packet is %u bytes, not %u, ignoring\n", buflen, sizeof(srf_ip_conn_header_t)+sizeof(srf_ip_conn_login_t));
+	if (server_sock_received_packet.received_bytes != sizeof(srf_ip_conn_header_t)+sizeof(srf_ip_conn_login_t)) {
+		printf("  packet is %u bytes, not %lu, ignoring\n", server_sock_received_packet.received_bytes, sizeof(srf_ip_conn_header_t)+sizeof(srf_ip_conn_login_t));
 		return;
 	}
 
@@ -25,74 +26,74 @@ static void packet_process_login(uint8_t *buf, uint16_t buflen) {
 	}
 	printf("\n");
 
-	// TODO: answer send
+	server_sock_send((uint8_t *)&answer, sizeof(answer), &server_sock_received_packet.from_addr);
 }
 
-static void packet_process_auth(uint8_t *buf, uint16_t buflen) {
+static void packet_process_auth(void) {
 	// TODO
 }
 
-static void packet_process_config(uint8_t *buf, uint16_t buflen) {
+static void packet_process_config(void) {
 	// TODO
 }
 
-static void packet_process_ping(uint8_t *buf, uint16_t buflen) {
+static void packet_process_ping(void) {
 	// TODO
 }
 
-static void packet_process_close(uint8_t *buf, uint16_t buflen) {
+static void packet_process_close(void) {
 	// TODO
 }
 
-static void packet_process_raw(uint8_t *buf, uint16_t buflen) {
+static void packet_process_raw(void) {
 	// TODO
 }
 
-static void packet_process_dmr(uint8_t *buf, uint16_t buflen) {
+static void packet_process_dmr(void) {
 	// TODO
 }
 
-static void packet_process_dstar(uint8_t *buf, uint16_t buflen) {
+static void packet_process_dstar(void) {
 	// TODO
 }
 
-static void packet_process_c4fm(uint8_t *buf, uint16_t buflen) {
+static void packet_process_c4fm(void) {
 	// TODO
 }
 
-void packet_process(uint8_t *buf, uint16_t buflen) {
-	srf_ip_conn_hdr_t *header = (srf_ip_conn_hdr_t *)buf;
+void packet_process(void) {
+	srf_ip_conn_header_t *header = (srf_ip_conn_header_t *)server_sock_received_packet.buf;
 
 	if (header->version != 0)
 		return;
 
 	switch (header->pkt_type) {
 		case SRF_IP_CONN_PKT_TYPE_LOGIN:
-			packet_process_login(buf, buflen);
+			packet_process_login();
 			break;
 		case SRF_IP_CONN_PKT_TYPE_AUTH:
-			packet_process_auth(buf, buflen);
+			packet_process_auth();
 			break;
 		case SRF_IP_CONN_PKT_TYPE_CONFIG:
-			packet_process_config(buf, buflen);
+			packet_process_config();
 			break;
 		case SRF_IP_CONN_PKT_TYPE_PING:
-			packet_process_ping(buf, buflen);
+			packet_process_ping();
 			break;
 		case SRF_IP_CONN_PKT_TYPE_CLOSE:
-			packet_process_close(buf, buflen);
+			packet_process_close();
 			break;
 		case SRF_IP_CONN_PKT_TYPE_DATA_RAW:
-			packet_process_raw(buf, buflen);
+			packet_process_raw();
 			break;
 		case SRF_IP_CONN_PKT_TYPE_DATA_DMR:
-			packet_process_dmr(buf, buflen);
+			packet_process_dmr();
 			break;
 		case SRF_IP_CONN_PKT_TYPE_DATA_DSTAR:
-			packet_process_dstar(buf, buflen);
+			packet_process_dstar();
 			break;
 		case SRF_IP_CONN_PKT_TYPE_DATA_C4FM:
-			packet_process_c4fm(buf, buflen);
+			packet_process_c4fm();
 			break;
 	}
 }

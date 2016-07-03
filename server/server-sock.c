@@ -5,6 +5,9 @@
 #include <unistd.h>
 #include <string.h>
 
+server_sock_received_packet_t server_sock_received_packet;
+static int server_sock_fd = -1;
+
 // Get sockaddr, IPv4 or IPv6.
 static void *server_sock_get_in_addr(struct sockaddr *sa) {
 	if (sa->sa_family == AF_INET)
@@ -13,48 +16,58 @@ static void *server_sock_get_in_addr(struct sockaddr *sa) {
 }
 
 // Returns 1 if socket can be read. Returns -1 on error.
-static int server_sock_check_read(int sockfd) {
+static int server_sock_check_read(void) {
 	fd_set rfds;
 	struct timeval timeout = { .tv_sec = 1, .tv_usec = 0 };
 
-	FD_ZERO(&rfds);
-	FD_SET(sockfd, &rfds);
+	if (server_sock_fd < 0)
+		return -1;
 
-	switch (select(sockfd+1, &rfds, NULL, NULL, &timeout)) {
+	FD_ZERO(&rfds);
+	FD_SET(server_sock_fd, &rfds);
+
+	switch (select(server_sock_fd+1, &rfds, NULL, NULL, &timeout)) {
 		case -1:
 			fprintf(stderr, "server-sock error: select() error\n");
 			return -1;
 		case 0: // Timeout
 			return 0;
 		default:
-			return FD_ISSET(sockfd, &rfds);
+			return FD_ISSET(server_sock_fd, &rfds);
 	}
 }
 
-// Receives UDP packet to buf. Returns 1 if a packet has been received, return -1 on error.
-int server_sock_receive(int sockfd, uint8_t *buf, uint16_t buflen) {
+// Receives UDP packet to server_sock_received_packet.
+// Returns received number of bytes if a packet has been received, and -1 on error.
+int server_sock_receive(void) {
 	int numbytes;
-	struct sockaddr_storage their_addr;
 	socklen_t addr_len;
 	char s[INET6_ADDRSTRLEN];
 
-	switch (server_sock_check_read(sockfd)) {
+	switch (server_sock_check_read()) {
 		case -1: return -1;
 		case 0: return 0;
 		default:
-			addr_len = sizeof(their_addr);
-			if ((numbytes = recvfrom(sockfd, buf, buflen, 0, (struct sockaddr *)&their_addr, &addr_len)) == -1)
+			addr_len = sizeof(server_sock_received_packet.from_addr);
+			if ((numbytes = recvfrom(server_sock_fd, server_sock_received_packet.buf, sizeof(server_sock_received_packet.buf), 0, (struct sockaddr *)&server_sock_received_packet.from_addr, &addr_len)) == -1)
 				return -1;
 
 			printf("server-sock: got %u bytes packet from %s\n", numbytes,
-					inet_ntop(their_addr.ss_family, server_sock_get_in_addr((struct sockaddr *)&their_addr), s, sizeof(s)));
+					inet_ntop(server_sock_received_packet.from_addr.ss_family, server_sock_get_in_addr((struct sockaddr *)&server_sock_received_packet.from_addr), s, sizeof(s)));
 			return numbytes;
 	}
 }
 
-int server_sock_init(uint16_t port, flag_t ipv4_only) {
+// Sends packet given in buf with size buflen to dst_addr.
+flag_t server_sock_send(uint8_t *buf, uint16_t buflen, struct sockaddr_storage *dst_addr) {
+	socklen_t addr_len = sizeof(server_sock_received_packet.from_addr);
+
+	return (sendto(server_sock_fd, buf, buflen, 0, (struct sockaddr *)dst_addr, addr_len) == buflen);
+}
+
+// Returns 1 if initialization was successful, 0 on error.
+flag_t server_sock_init(uint16_t port, flag_t ipv4_only) {
 	struct addrinfo hints, *servinfo, *p;
-	int res = -1;
 	int optval;
 	char port_str[6];
 	char s[INET6_ADDRSTRLEN];
@@ -65,18 +78,19 @@ int server_sock_init(uint16_t port, flag_t ipv4_only) {
 	hints.ai_flags = AI_PASSIVE;
 
 	snprintf(port_str, sizeof(port_str), "%u", port);
-	if ((res = getaddrinfo(NULL, port_str, &hints, &servinfo)) != 0) {
-		fprintf(stderr, "server-sock error: getaddrinfo error: %s\n", gai_strerror(res));
-		return -1;
+	if ((server_sock_fd = getaddrinfo(NULL, port_str, &hints, &servinfo)) != 0) {
+		fprintf(stderr, "server-sock error: getaddrinfo error: %s\n", gai_strerror(server_sock_fd));
+		server_sock_fd = -1;
+		return 0;
 	}
 
 	// Loop through all the results and bind to the first we can.
 	for(p = servinfo; p != NULL; p = p->ai_next) {
-		if ((res = socket(p->ai_family, p->ai_socktype, p->ai_protocol)) == -1)
+		if ((server_sock_fd = socket(p->ai_family, p->ai_socktype, p->ai_protocol)) == -1)
 			continue;
 
-		if (bind(res, p->ai_addr, p->ai_addrlen) == -1) {
-			close(res);
+		if (bind(server_sock_fd, p->ai_addr, p->ai_addrlen) == -1) {
+			close(server_sock_fd);
 			continue;
 		}
 		break;
@@ -84,7 +98,8 @@ int server_sock_init(uint16_t port, flag_t ipv4_only) {
 
 	if (p == NULL) {
 		fprintf(stderr, "server-sock error: failed to bind socket\n");
-		return -1;
+		server_sock_fd = -1;
+		return 0;
 	}
 
 	printf("server-sock: bound to %s\n",
@@ -94,7 +109,12 @@ int server_sock_init(uint16_t port, flag_t ipv4_only) {
 
 	// Setting TOS.
 	optval = 184;
-	setsockopt(res, IPPROTO_IP, IP_TOS, &optval, sizeof(optval));
+	setsockopt(server_sock_fd, IPPROTO_IP, IP_TOS, &optval, sizeof(optval));
 
-	return res;
+	return 1;
+}
+
+void server_sock_deinit(void) {
+	close(server_sock_fd);
+	server_sock_fd = -1;
 }
