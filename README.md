@@ -74,7 +74,7 @@ The protocol uses UDP as transport layer. Server listens on port 65100 by defaul
 
 UDP packet (srf_ip_conn_packet_t) structure:
 
-Header | Payload (optional)
+Header | Payload
 --- | ---
 
 See [common/srf-ip-conn-packets.h](https://github.com/sharkrf/srf-ip-conn/blob/master/common/srf-ip-conn-packets.h) for used packet structures. Byte order is big-endian.
