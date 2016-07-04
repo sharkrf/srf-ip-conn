@@ -1,5 +1,7 @@
 # SharkRF IP Connector Protocol (Draft)
 
+This is the protocol used by openSPOT's UDP API to allow 3rd party developers to create their own applications which communicate using openSPOT.
+
 ## Protocol Description
 
 ### Login process
@@ -72,7 +74,7 @@ Server->Client: Close
 
 The protocol uses UDP as transport layer. Server listens on port 65100 by default.
 
-UDP packet (srf_ip_conn_packet_t) structure:
+UDP packet (*srf_ip_conn_packet_t*) structure:
 
 Header | Payload
 --- | ---
