@@ -3,24 +3,24 @@
 
 #include "types.h"
 
-#define SRF_IP_CONN_MAGIC_STR                       "SRFIPC"
-#define SRF_IP_CONN_MAGIC_STR_LENGTH                (sizeof(SRF_IP_CONN_MAGIC_STR)-1)
-#define SRF_IP_CONN_MAX_PASSWORD_LENGTH             32
-#define SRF_IP_CONN_TOKEN_LENGTH                    8
+#define SRF_IP_CONN_MAGIC_STR                               "SRFIPC"
+#define SRF_IP_CONN_MAGIC_STR_LENGTH                        (sizeof(SRF_IP_CONN_MAGIC_STR)-1)
+#define SRF_IP_CONN_MAX_PASSWORD_LENGTH                     32
+#define SRF_IP_CONN_TOKEN_LENGTH                            8
 
-#define SRF_IP_CONN_PACKET_TYPE_LOGIN               0x00    // Payload: srf_ip_conn_login_payload_t
-#define SRF_IP_CONN_PACKET_TYPE_TOKEN               0x01    // Payload: srf_ip_conn_token_payload_t
-#define SRF_IP_CONN_PACKET_TYPE_AUTH                0x02    // Payload: srf_ip_conn_auth_payload_t
-#define SRF_IP_CONN_PACKET_TYPE_ACK                 0x03    // Payload: srf_ip_conn_ack_payload_t
-#define SRF_IP_CONN_PACKET_TYPE_NAK                 0x04    // Payload: srf_ip_conn_nak_payload_t
-#define SRF_IP_CONN_PACKET_TYPE_CONFIG              0x05    // Payload: srf_ip_conn_config_payload_t
-#define SRF_IP_CONN_PACKET_TYPE_PING                0x06    // Payload: srf_ip_conn_ping_payload_t
-#define SRF_IP_CONN_PACKET_TYPE_PONG                0x07    // Payload: srf_ip_conn_pong_payload_t
-#define SRF_IP_CONN_PACKET_TYPE_CLOSE               0x08    // Payload: srf_ip_conn_close_payload_t
-#define SRF_IP_CONN_PACKET_TYPE_DATA_RAW            0x09    // Payload: srf_ip_conn_data_raw_payload_t
-#define SRF_IP_CONN_PACKET_TYPE_DATA_DMR            0x0a    // Payload: srf_ip_conn_data_dmr_payload_t
-#define SRF_IP_CONN_PACKET_TYPE_DATA_DSTAR          0x0b    // Payload: srf_ip_conn_data_dstar_payload_t
-#define SRF_IP_CONN_PACKET_TYPE_DATA_C4FM           0x0c    // Payload: srf_ip_conn_data_c4fm_payload_t
+#define SRF_IP_CONN_PACKET_TYPE_LOGIN                       0x00 // Payload: srf_ip_conn_login_payload_t
+#define SRF_IP_CONN_PACKET_TYPE_TOKEN                       0x01 // Payload: srf_ip_conn_token_payload_t
+#define SRF_IP_CONN_PACKET_TYPE_AUTH                        0x02 // Payload: srf_ip_conn_auth_payload_t
+#define SRF_IP_CONN_PACKET_TYPE_ACK                         0x03 // Payload: srf_ip_conn_ack_payload_t
+#define SRF_IP_CONN_PACKET_TYPE_NAK                         0x04 // Payload: srf_ip_conn_nak_payload_t
+#define SRF_IP_CONN_PACKET_TYPE_CONFIG                      0x05 // Payload: srf_ip_conn_config_payload_t
+#define SRF_IP_CONN_PACKET_TYPE_PING                        0x06 // Payload: srf_ip_conn_ping_payload_t
+#define SRF_IP_CONN_PACKET_TYPE_PONG                        0x07 // Payload: srf_ip_conn_pong_payload_t
+#define SRF_IP_CONN_PACKET_TYPE_CLOSE                       0x08 // Payload: srf_ip_conn_close_payload_t
+#define SRF_IP_CONN_PACKET_TYPE_DATA_RAW                    0x09 // Payload: srf_ip_conn_data_raw_payload_t
+#define SRF_IP_CONN_PACKET_TYPE_DATA_DMR                    0x0a // Payload: srf_ip_conn_data_dmr_payload_t
+#define SRF_IP_CONN_PACKET_TYPE_DATA_DSTAR                  0x0b // Payload: srf_ip_conn_data_dstar_payload_t
+#define SRF_IP_CONN_PACKET_TYPE_DATA_C4FM                   0x0c // Payload: srf_ip_conn_data_c4fm_payload_t
 typedef uint8_t srf_ip_conn_packet_type_t;
 
 typedef struct __attribute__((packed)) {
