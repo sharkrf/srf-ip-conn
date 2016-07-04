@@ -31,7 +31,7 @@ Server->Client: ACK
 
 ### Ping
 
-Client should ping the server periodically at least once every 30 seconds (5 seconds is recommended to keep firewalls open) after the last packet has sent to the server. No need to send ping if client transmits in this 5 second timeframe. The server ends the connection after 30 seconds of inactivity.
+Client should ping the server periodically at least once every 30 seconds (5 seconds is recommended to keep firewalls open) after the last packet has sent to the server. No need to send ping if client transmits in this 5 second timeframe. The server ends the connection after 30 seconds of client inactivity.
 
 <!---
 Client->Server: Ping
