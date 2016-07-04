@@ -1,99 +1,325 @@
 #include "packet.h"
 #include "server-sock.h"
+#include "server-client.h"
+#include "config.h"
+#include "hmac.h"
 
 #include <stdlib.h>
+#include <string.h>
+#include <time.h>
+#include <arpa/inet.h>
 
 static struct {
 	uint32_t client_id;
 	uint8_t given_token[8];
-} packet_new_connection_data;
+	time_t last_auth_tried_at;
+} packet_new_connection_data = { .last_auth_tried_at = 0 };
+
+static void packet_init(srf_ip_conn_packet_header_t *packet_header, srf_ip_conn_packet_type_t packet_type) {
+	memcpy(packet_header->magic, SRF_IP_CONN_MAGIC_STR, SRF_IP_CONN_MAGIC_STR_LENGTH);
+	packet_header->packet_type = packet_type;
+	packet_header->version = 0;
+}
 
 static void packet_process_login(void) {
-	srf_ip_conn_login_t *packet = (srf_ip_conn_login_t *)(server_sock_received_packet.buf+sizeof(srf_ip_conn_header_t));
-	srf_ip_conn_token_t answer;
+	srf_ip_conn_packet_t *packet = (srf_ip_conn_packet_t *)server_sock_received_packet.buf;
+	srf_ip_conn_packet_t answer_packet;
 	uint8_t i;
 
-	if (server_sock_received_packet.received_bytes != sizeof(srf_ip_conn_header_t)+sizeof(srf_ip_conn_login_t)) {
-		printf("  packet is %u bytes, not %lu, ignoring\n", server_sock_received_packet.received_bytes, sizeof(srf_ip_conn_header_t)+sizeof(srf_ip_conn_login_t));
+	if (server_sock_received_packet.received_bytes != sizeof(srf_ip_conn_packet_header_t)+sizeof(srf_ip_conn_login_payload_t)) {
+		printf("  packet is %u bytes, not %lu, ignoring\n", server_sock_received_packet.received_bytes, sizeof(srf_ip_conn_packet_header_t)+sizeof(srf_ip_conn_login_payload_t));
 		return;
 	}
 
-	packet_new_connection_data.client_id = packet->client_id;
-	printf("  got login packet from id %u, answering with token ", packet->client_id);
+	packet_init(&answer_packet.header, SRF_IP_CONN_PACKET_TYPE_TOKEN);
+	packet_new_connection_data.client_id = ntohl(packet->login.client_id);
+	printf("  got login packet from id %u, answering with token ", packet_new_connection_data.client_id);
 	for (i = 0; i < sizeof(packet_new_connection_data.given_token); i++) {
-		packet_new_connection_data.given_token[i] = answer.token[i] = rand();
-		printf("%.2x", answer.token[i]);
+		packet_new_connection_data.given_token[i] = answer_packet.token.token[i] = rand();
+		printf("%.2x", answer_packet.token.token[i]);
 	}
 	printf("\n");
 
-	server_sock_send((uint8_t *)&answer, sizeof(answer), &server_sock_received_packet.from_addr);
+	server_sock_send((uint8_t *)&answer_packet, sizeof(srf_ip_conn_packet_header_t) + sizeof(srf_ip_conn_token_payload_t), &server_sock_received_packet.from_addr);
 }
 
 static void packet_process_auth(void) {
-	// TODO
+	srf_ip_conn_packet_t *packet = (srf_ip_conn_packet_t *)server_sock_received_packet.buf;
+	srf_ip_conn_packet_t answer_packet;
+	uint8_t i;
+
+	// Limiting auth tries for only one try per 5 seconds.
+	if (time(NULL) - packet_new_connection_data.last_auth_tried_at < 5) {
+		printf("  got auth packet, but timeout hasn't been expired\n");
+		return;
+	}
+
+	time(&packet_new_connection_data.last_auth_tried_at);
+
+	if (server_sock_received_packet.received_bytes != sizeof(srf_ip_conn_packet_header_t)+sizeof(srf_ip_conn_auth_payload_t)) {
+		printf("  packet is %u bytes, not %lu, ignoring\n", server_sock_received_packet.received_bytes, sizeof(srf_ip_conn_packet_header_t)+sizeof(srf_ip_conn_auth_payload_t));
+		return;
+	}
+
+	printf("  got auth packet, hmac: ");
+	for (i = 0; i < 32; i++)
+		printf("%.2x", packet->auth.hmac[i]);
+	printf("\n");
+
+	// If hash is not matching the HMAC we received in the auth packet, we send a nak.
+	if (!hmac_check(packet_new_connection_data.given_token, packet, sizeof(srf_ip_conn_auth_payload_t))) {
+		printf("    hmac mismatch, sending nak\n");
+		packet_init(&answer_packet.header, SRF_IP_CONN_PACKET_TYPE_NAK);
+		for (i = 0; i < sizeof(answer_packet.nak.random_data); i++)
+			answer_packet.nak.random_data[i] = rand();
+		answer_packet.nak.result = SRF_IP_CONN_NAK_RESULT_AUTH_INVALID_HMAC;
+		hmac_add(packet_new_connection_data.given_token, &answer_packet, sizeof(srf_ip_conn_nak_payload_t));
+		server_sock_send((uint8_t *)&answer_packet, sizeof(srf_ip_conn_packet_header_t) + sizeof(srf_ip_conn_nak_payload_t), &server_sock_received_packet.from_addr);
+		return;
+	}
+
+	// If user tries to log in with an invalid client id, we reject it with a nak.
+	if (packet_new_connection_data.client_id == 12345) {
+		printf("    invalid client id, sending nak\n");
+		packet_init(&answer_packet.header, SRF_IP_CONN_PACKET_TYPE_NAK);
+		for (i = 0; i < sizeof(answer_packet.nak.random_data); i++)
+			answer_packet.nak.random_data[i] = rand();
+		answer_packet.nak.result = SRF_IP_CONN_NAK_RESULT_AUTH_INVALID_CLIENT_ID;
+		hmac_add(packet_new_connection_data.given_token, &answer_packet, sizeof(srf_ip_conn_nak_payload_t));
+		server_sock_send((uint8_t *)&answer_packet, sizeof(srf_ip_conn_packet_header_t) + sizeof(srf_ip_conn_nak_payload_t), &server_sock_received_packet.from_addr);
+		return;
+	}
+
+	// Client is now logged in.
+	server_client_login(packet_new_connection_data.client_id, packet_new_connection_data.given_token, &server_sock_received_packet.from_addr);
+
+	packet_init(&answer_packet.header, SRF_IP_CONN_PACKET_TYPE_ACK);
+	for (i = 0; i < sizeof(answer_packet.ack.random_data); i++)
+		answer_packet.ack.random_data[i] = rand();
+	answer_packet.ack.result = SRF_IP_CONN_ACK_RESULT_AUTH;
+	hmac_add(packet_new_connection_data.given_token, &answer_packet, sizeof(srf_ip_conn_ack_payload_t));
+	server_sock_send((uint8_t *)&answer_packet, sizeof(srf_ip_conn_packet_header_t) + sizeof(srf_ip_conn_ack_payload_t), &server_sock_received_packet.from_addr);
 }
 
-static void packet_process_config(void) {
-	// TODO
+static flag_t packet_process_config(void) {
+	srf_ip_conn_packet_t *packet = (srf_ip_conn_packet_t *)server_sock_received_packet.buf;
+	srf_ip_conn_packet_t answer_packet;
+	uint8_t i;
+
+	if (server_sock_received_packet.received_bytes != sizeof(srf_ip_conn_packet_header_t)+sizeof(srf_ip_conn_config_payload_t)) {
+		printf("  packet is %u bytes, not %lu, ignoring\n", server_sock_received_packet.received_bytes, sizeof(srf_ip_conn_packet_header_t)+sizeof(srf_ip_conn_config_payload_t));
+		return 0;
+	}
+	if (!server_client_is_logged_in(&server_sock_received_packet.from_addr)) {
+		printf("  client isn't logged in, ignoring packet\n");
+		return 0;
+	}
+	if (!hmac_check(server_client.token, packet, sizeof(srf_ip_conn_config_payload_t))) {
+		printf("  invalid hmac, ignoring packet\n");
+		return 0;
+	}
+
+	printf("  got valid config packet\n");
+	server_client_config(&packet->config);
+
+	packet_init(&answer_packet.header, SRF_IP_CONN_PACKET_TYPE_ACK);
+	answer_packet.ack.result = SRF_IP_CONN_ACK_RESULT_CONFIG;
+	for (i = 0; i < sizeof(answer_packet.ack.random_data); i++)
+		answer_packet.ack.random_data[i] = rand();
+	hmac_add(server_client.token, &answer_packet, sizeof(srf_ip_conn_ack_payload_t));
+	server_sock_send((uint8_t *)&answer_packet, sizeof(srf_ip_conn_packet_header_t) + sizeof(srf_ip_conn_ack_payload_t), &server_sock_received_packet.from_addr);
+	return 1;
 }
 
-static void packet_process_ping(void) {
-	// TODO
+static flag_t packet_process_ping(void) {
+	srf_ip_conn_packet_t *packet = (srf_ip_conn_packet_t *)server_sock_received_packet.buf;
+	srf_ip_conn_packet_t answer_packet;
+	uint8_t i;
+
+	if (server_sock_received_packet.received_bytes != sizeof(srf_ip_conn_packet_header_t)+sizeof(srf_ip_conn_ping_payload_t)) {
+		printf("  packet is %u bytes, not %lu, ignoring\n", server_sock_received_packet.received_bytes, sizeof(srf_ip_conn_packet_header_t)+sizeof(srf_ip_conn_ping_payload_t));
+		return 0;
+	}
+	if (!server_client_is_logged_in(&server_sock_received_packet.from_addr)) {
+		printf("  client isn't logged in, ignoring packet\n");
+		return 0;
+	}
+	if (!hmac_check(server_client.token, packet, sizeof(srf_ip_conn_ping_payload_t))) {
+		printf("  invalid hmac, ignoring packet\n");
+		return 0;
+	}
+
+	printf("  got ping, sending pong\n");
+	packet_init(&answer_packet.header, SRF_IP_CONN_PACKET_TYPE_PONG);
+	for (i = 0; i < sizeof(answer_packet.pong.random_data); i++)
+		answer_packet.pong.random_data[i] = rand();
+	hmac_add(server_client.token, &answer_packet, sizeof(srf_ip_conn_pong_payload_t));
+	server_sock_send((uint8_t *)&answer_packet, sizeof(srf_ip_conn_packet_header_t) + sizeof(srf_ip_conn_pong_payload_t), &server_sock_received_packet.from_addr);
+	return 1;
 }
 
 static void packet_process_close(void) {
-	// TODO
+	srf_ip_conn_packet_t *packet = (srf_ip_conn_packet_t *)server_sock_received_packet.buf;
+	srf_ip_conn_packet_t answer_packet;
+	uint8_t i;
+
+	if (server_sock_received_packet.received_bytes != sizeof(srf_ip_conn_packet_header_t)+sizeof(srf_ip_conn_close_payload_t)) {
+		printf("  packet is %u bytes, not %lu, ignoring\n", server_sock_received_packet.received_bytes, sizeof(srf_ip_conn_packet_header_t)+sizeof(srf_ip_conn_close_payload_t));
+		return;
+	}
+	if (!server_client_is_logged_in(&server_sock_received_packet.from_addr)) {
+		printf("  client isn't logged in, ignoring packet\n");
+		return;
+	}
+	if (!hmac_check(server_client.token, packet, sizeof(srf_ip_conn_close_payload_t))) {
+		printf("  invalid hmac, ignoring packet\n");
+		return;
+	}
+
+	printf("  got valid close packet\n");
+	server_client_logout();
+
+	packet_init(&answer_packet.header, SRF_IP_CONN_PACKET_TYPE_ACK);
+	answer_packet.ack.result = SRF_IP_CONN_ACK_RESULT_CLOSE;
+	for (i = 0; i < sizeof(answer_packet.ack.random_data); i++)
+		answer_packet.ack.random_data[i] = rand();
+	hmac_add(server_client.token, &answer_packet, sizeof(srf_ip_conn_ack_payload_t));
+	server_sock_send((uint8_t *)&answer_packet, sizeof(srf_ip_conn_packet_header_t) + sizeof(srf_ip_conn_ack_payload_t), &server_sock_received_packet.from_addr);
 }
 
-static void packet_process_raw(void) {
-	// TODO
+static flag_t packet_process_raw(void) {
+	srf_ip_conn_packet_t *packet = (srf_ip_conn_packet_t *)server_sock_received_packet.buf;
+
+	if (server_sock_received_packet.received_bytes != sizeof(srf_ip_conn_packet_header_t)+sizeof(srf_ip_conn_data_raw_payload_t)) {
+		printf("  packet is %u bytes, not %lu, ignoring\n", server_sock_received_packet.received_bytes, sizeof(srf_ip_conn_packet_header_t)+sizeof(srf_ip_conn_data_raw_payload_t));
+		return 0;
+	}
+	if (!server_client_is_logged_in(&server_sock_received_packet.from_addr)) {
+		printf("  client isn't logged in, ignoring packet\n");
+		return 0;
+	}
+	if (!hmac_check(server_client.token, packet, sizeof(srf_ip_conn_config_payload_t))) {
+		printf("  invalid hmac, ignoring packet\n");
+		return 0;
+	}
+
+	printf("  got valid raw data\n");
+	srf_ip_conn_packets_print_data_raw_payload(&packet->data_raw);
+
+	return 1;
 }
 
-static void packet_process_dmr(void) {
-	// TODO
+static flag_t packet_process_dmr(void) {
+	srf_ip_conn_packet_t *packet = (srf_ip_conn_packet_t *)server_sock_received_packet.buf;
+
+	if (server_sock_received_packet.received_bytes != sizeof(srf_ip_conn_packet_header_t)+sizeof(srf_ip_conn_data_dmr_payload_t)) {
+		printf("  packet is %u bytes, not %lu, ignoring\n", server_sock_received_packet.received_bytes, sizeof(srf_ip_conn_packet_header_t)+sizeof(srf_ip_conn_data_dmr_payload_t));
+		return 0;
+	}
+	if (!server_client_is_logged_in(&server_sock_received_packet.from_addr)) {
+		printf("  client isn't logged in, ignoring packet\n");
+		return 0;
+	}
+	if (!hmac_check(server_client.token, packet, sizeof(srf_ip_conn_config_payload_t))) {
+		printf("  invalid hmac, ignoring packet\n");
+		return 0;
+	}
+
+	printf("  got valid dmr data\n");
+	srf_ip_conn_packets_print_data_dmr_payload(&packet->data_dmr);
+
+	return 1;
 }
 
-static void packet_process_dstar(void) {
-	// TODO
+static flag_t packet_process_dstar(void) {
+	srf_ip_conn_packet_t *packet = (srf_ip_conn_packet_t *)server_sock_received_packet.buf;
+
+	if (server_sock_received_packet.received_bytes != sizeof(srf_ip_conn_packet_header_t)+sizeof(srf_ip_conn_data_dstar_payload_t)) {
+		printf("  packet is %u bytes, not %lu, ignoring\n", server_sock_received_packet.received_bytes, sizeof(srf_ip_conn_packet_header_t)+sizeof(srf_ip_conn_data_dstar_payload_t));
+		return 0;
+	}
+	if (!server_client_is_logged_in(&server_sock_received_packet.from_addr)) {
+		printf("  client isn't logged in, ignoring packet\n");
+		return 0;
+	}
+	if (!hmac_check(server_client.token, packet, sizeof(srf_ip_conn_config_payload_t))) {
+		printf("  invalid hmac, ignoring packet\n");
+		return 0;
+	}
+
+	printf("  got valid dstar data\n");
+	srf_ip_conn_packets_print_data_dstar_payload(&packet->data_dstar);
+
+	return 1;
 }
 
-static void packet_process_c4fm(void) {
-	// TODO
+static flag_t packet_process_c4fm(void) {
+	srf_ip_conn_packet_t *packet = (srf_ip_conn_packet_t *)server_sock_received_packet.buf;
+
+	if (server_sock_received_packet.received_bytes != sizeof(srf_ip_conn_packet_header_t)+sizeof(srf_ip_conn_data_c4fm_payload_t)) {
+		printf("  packet is %u bytes, not %lu, ignoring\n", server_sock_received_packet.received_bytes, sizeof(srf_ip_conn_packet_header_t)+sizeof(srf_ip_conn_data_c4fm_payload_t));
+		return 0;
+	}
+	if (!server_client_is_logged_in(&server_sock_received_packet.from_addr)) {
+		printf("  client isn't logged in, ignoring packet\n");
+		return 0;
+	}
+	if (!hmac_check(server_client.token, packet, sizeof(srf_ip_conn_config_payload_t))) {
+		printf("  invalid hmac, ignoring packet\n");
+		return 0;
+	}
+
+	printf("  got valid c4fm data\n");
+	srf_ip_conn_packets_print_data_c4fm_payload(&packet->data_c4fm);
+
+	return 1;
+}
+
+flag_t packet_is_header_valid(void) {
+	return (server_sock_received_packet.received_bytes >= sizeof(srf_ip_conn_packet_header_t) &&
+			memcmp(server_sock_received_packet.buf, SRF_IP_CONN_MAGIC_STR, SRF_IP_CONN_MAGIC_STR_LENGTH) == 0);
 }
 
 void packet_process(void) {
-	srf_ip_conn_header_t *header = (srf_ip_conn_header_t *)server_sock_received_packet.buf;
+	srf_ip_conn_packet_header_t *header = (srf_ip_conn_packet_header_t *)server_sock_received_packet.buf;
 
-	if (header->version != 0)
-		return;
-
-	switch (header->pkt_type) {
-		case SRF_IP_CONN_PKT_TYPE_LOGIN:
-			packet_process_login();
-			break;
-		case SRF_IP_CONN_PKT_TYPE_AUTH:
-			packet_process_auth();
-			break;
-		case SRF_IP_CONN_PKT_TYPE_CONFIG:
-			packet_process_config();
-			break;
-		case SRF_IP_CONN_PKT_TYPE_PING:
-			packet_process_ping();
-			break;
-		case SRF_IP_CONN_PKT_TYPE_CLOSE:
-			packet_process_close();
-			break;
-		case SRF_IP_CONN_PKT_TYPE_DATA_RAW:
-			packet_process_raw();
-			break;
-		case SRF_IP_CONN_PKT_TYPE_DATA_DMR:
-			packet_process_dmr();
-			break;
-		case SRF_IP_CONN_PKT_TYPE_DATA_DSTAR:
-			packet_process_dstar();
-			break;
-		case SRF_IP_CONN_PKT_TYPE_DATA_C4FM:
-			packet_process_c4fm();
+	switch (header->version) {
+		case 0:
+			switch (header->packet_type) {
+				case SRF_IP_CONN_PACKET_TYPE_LOGIN:
+					packet_process_login();
+					break;
+				case SRF_IP_CONN_PACKET_TYPE_AUTH:
+					packet_process_auth();
+					break;
+				case SRF_IP_CONN_PACKET_TYPE_CONFIG:
+					if (packet_process_config())
+						server_client_got_valid_packet();
+					break;
+				case SRF_IP_CONN_PACKET_TYPE_PING:
+					if (packet_process_ping())
+						server_client_got_valid_packet();
+					break;
+				case SRF_IP_CONN_PACKET_TYPE_CLOSE:
+					packet_process_close();
+					break;
+				case SRF_IP_CONN_PACKET_TYPE_DATA_RAW:
+					if (packet_process_raw())
+						server_client_got_valid_packet();
+					break;
+				case SRF_IP_CONN_PACKET_TYPE_DATA_DMR:
+					if (packet_process_dmr())
+						server_client_got_valid_packet();
+					break;
+				case SRF_IP_CONN_PACKET_TYPE_DATA_DSTAR:
+					if (packet_process_dstar())
+						server_client_got_valid_packet();
+					break;
+				case SRF_IP_CONN_PACKET_TYPE_DATA_C4FM:
+					if (packet_process_c4fm())
+						server_client_got_valid_packet();
+					break;
+			}
 			break;
 	}
 }

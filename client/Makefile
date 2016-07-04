@@ -1,5 +1,5 @@
-all: main.c
-	gcc -o client *.c
+all: *.c *.h ../common/*
+	gcc -Wall -o client -I../common *.c ../common/*
 
 clean:
 	rm client

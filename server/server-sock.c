@@ -1,24 +1,18 @@
 #include "server-sock.h"
+#include "sock.h"
 
-#include <arpa/inet.h>
 #include <netdb.h>
 #include <unistd.h>
 #include <string.h>
 
+// As we deal with only one received packet at a time, we store it in this struct.
 server_sock_received_packet_t server_sock_received_packet;
 static int server_sock_fd = -1;
-
-// Get sockaddr, IPv4 or IPv6.
-static void *server_sock_get_in_addr(struct sockaddr *sa) {
-	if (sa->sa_family == AF_INET)
-		return &(((struct sockaddr_in*)sa)->sin_addr);
-	return &(((struct sockaddr_in6*)sa)->sin6_addr);
-}
 
 // Returns 1 if socket can be read. Returns -1 on error.
 static int server_sock_check_read(void) {
 	fd_set rfds;
-	struct timeval timeout = { .tv_sec = 1, .tv_usec = 0 };
+	struct timeval timeout = { .tv_sec = 1, .tv_usec = 0 }; // Blocking only for 1 second.
 
 	if (server_sock_fd < 0)
 		return -1;
@@ -40,7 +34,6 @@ static int server_sock_check_read(void) {
 // Receives UDP packet to server_sock_received_packet.
 // Returns received number of bytes if a packet has been received, and -1 on error.
 int server_sock_receive(void) {
-	int numbytes;
 	socklen_t addr_len;
 	char s[INET6_ADDRSTRLEN];
 
@@ -49,20 +42,21 @@ int server_sock_receive(void) {
 		case 0: return 0;
 		default:
 			addr_len = sizeof(server_sock_received_packet.from_addr);
-			if ((numbytes = recvfrom(server_sock_fd, server_sock_received_packet.buf, sizeof(server_sock_received_packet.buf), 0, (struct sockaddr *)&server_sock_received_packet.from_addr, &addr_len)) == -1)
+			if ((server_sock_received_packet.received_bytes = recvfrom(server_sock_fd, server_sock_received_packet.buf, sizeof(server_sock_received_packet.buf), 0, (struct sockaddr *)&server_sock_received_packet.from_addr, &addr_len)) == -1)
 				return -1;
 
-			printf("server-sock: got %u bytes packet from %s\n", numbytes,
-					inet_ntop(server_sock_received_packet.from_addr.ss_family, server_sock_get_in_addr((struct sockaddr *)&server_sock_received_packet.from_addr), s, sizeof(s)));
-			return numbytes;
+			printf("server-sock: got %u byte packet from %s:%u\n", server_sock_received_packet.received_bytes,
+					inet_ntop(server_sock_received_packet.from_addr.sa_family, sock_get_in_addr(&server_sock_received_packet.from_addr), s, sizeof(s)),
+					sock_get_port(&server_sock_received_packet.from_addr));
+			return server_sock_received_packet.received_bytes;
 	}
 }
 
 // Sends packet given in buf with size buflen to dst_addr.
-flag_t server_sock_send(uint8_t *buf, uint16_t buflen, struct sockaddr_storage *dst_addr) {
-	socklen_t addr_len = sizeof(server_sock_received_packet.from_addr);
+flag_t server_sock_send(uint8_t *buf, uint16_t buflen, struct sockaddr *dst_addr) {
+	socklen_t addr_len = sizeof(struct sockaddr);
 
-	return (sendto(server_sock_fd, buf, buflen, 0, (struct sockaddr *)dst_addr, addr_len) == buflen);
+	return (sendto(server_sock_fd, buf, buflen, 0, dst_addr, addr_len) == buflen);
 }
 
 // Returns 1 if initialization was successful, 0 on error.
@@ -103,7 +97,7 @@ flag_t server_sock_init(uint16_t port, flag_t ipv4_only) {
 	}
 
 	printf("server-sock: bound to %s\n",
-			inet_ntop(p->ai_addr->sa_family, server_sock_get_in_addr((struct sockaddr *)&p->ai_addr), s, sizeof(s)));
+			inet_ntop(p->ai_addr->sa_family, sock_get_in_addr((struct sockaddr *)&p->ai_addr), s, sizeof(s)));
 
 	freeaddrinfo(servinfo);
 
