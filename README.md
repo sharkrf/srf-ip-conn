@@ -15,7 +15,7 @@ Note right of Server: If authorized,\nthe server replies with ACK,\notherwise NA
 Server->Client: ACK
 Note over Client: Client is now logged in.
 -->
-![Login Process Diagram](https://cdn.rawgit.com/akosmarton/e52fced36f0f7748f2ab6ad52517502a/raw/1941176e04990310842efca9443ff3cd97eb4772/diagram-login.svg)
+![Login Process Diagram](https://cdn.rawgit.com/sharkrf/srf-ip-conn/master/img/login.svg)
 
 Max. password length is 32 characters. Server limits auth tries for only one in every 5 seconds. Packets with invalid HMAC are ignored.
 
@@ -27,6 +27,7 @@ Client can optionally update it's config information.
 Client->Server: Config
 Server->Client: ACK
 -->
+![Config Process Diagram](https://cdn.rawgit.com/sharkrf/srf-ip-conn/master/img/config.svg)
 
 ### Ping
 
@@ -36,7 +37,7 @@ Client should ping the server periodically at least once every 30 seconds (5 sec
 Client->Server: Ping
 Server->Client: Pong
 -->
-![Ping Diagram](https://cdn.rawgit.com/akosmarton/056f75e19987bca3a54152c9e270d8ff/raw/df25347f4b59beb20a43fa52840e5d6b6ef01c7a/diagram-ping.svg)
+![Ping Process Diagram](https://cdn.rawgit.com/sharkrf/srf-ip-conn/master/img/ping.svg)
 
 ### Data
 
@@ -49,7 +50,7 @@ Server->Client: Data
 Client->Server: Data
 Server->Client: Data
 -->
-![Data Diagram](https://cdn.rawgit.com/akosmarton/4e98576fceca53b38bc0f6debcc327b4/raw/b1244833e428a7ef0537b9c10442225f0951b129/diagram-data.svg)
+![Data Diagram](https://cdn.rawgit.com/sharkrf/srf-ip-conn/master/img/data.svg)
 
 If client's sequence number is smaller than the last one received by the server, the server will close the connection. In this case, the client must re-initialize the connection starting with the login process.
 
@@ -61,10 +62,11 @@ Both participants can close the connection gracefully.
 Client->Server: Close
 Server->Client: ACK
 -->
+![Close Process Diagram 1](https://cdn.rawgit.com/sharkrf/srf-ip-conn/master/img/close-client.svg)
 <!--
 Server->Client: Close
 -->
-![Close Diagram 1](https://cdn.rawgit.com/akosmarton/de355c0ffa6450a97cc6da84d68e4223/raw/ebaaea40eabf79e616a29fe2bdbc452b49aeec7a/diagram-close1.svg)	![Close Diagram 2](https://cdn.rawgit.com/akosmarton/97ba1a469ee1b4b52801d7448b971610/raw/67a127845b438c1a67470d7ae791332bf719182a/diagram-close2.svg)
+![Close Process Diagram 2](https://cdn.rawgit.com/sharkrf/srf-ip-conn/master/img/close-server.svg)
 
 ## Packet Structure
 
@@ -75,4 +77,4 @@ UDP payload structure:
 Header | Payload
 --- | ---
 
-See common/srf-ip-conn-packets.h for used packet structures. Byte order is big-endian.
+See [common/srf-ip-conn-packets.h](https://github.com/sharkrf/srf-ip-conn/blob/master/common/srf-ip-conn-packets.h) for used packet structures. Byte order is big-endian.
