@@ -10,6 +10,10 @@ void srf_ip_conn_packet_init(srf_ip_conn_packet_header_t *packet_header, srf_ip_
 	packet_header->version = 0;
 }
 
+flag_t srf_ip_conn_packet_is_header_valid(srf_ip_conn_packet_header_t *packet_header) {
+	return (memcmp(packet_header->magic, SRF_IP_CONN_MAGIC_STR, SRF_IP_CONN_MAGIC_STR_LENGTH) == 0);
+}
+
 void srf_ip_conn_packet_print_data_raw_payload(srf_ip_conn_data_raw_payload_t *payload) {
 	uint8_t i;
 

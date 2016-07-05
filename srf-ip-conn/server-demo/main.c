@@ -22,7 +22,8 @@ int main(void) {
 			case -1: return 1;
 			case 0: break;
 			default:
-				if (packet_is_header_valid())
+				if (server_sock_received_packet.received_bytes >= sizeof(srf_ip_conn_packet_header_t) &&
+						srf_ip_conn_packet_is_header_valid((srf_ip_conn_packet_header_t *)server_sock_received_packet.buf))
 					packet_process();
 				else
 					printf("  not an srf ip conn packet, ignoring\n");

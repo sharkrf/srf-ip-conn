@@ -269,11 +269,6 @@ static flag_t packet_process_c4fm(void) {
 	return 1;
 }
 
-flag_t packet_is_header_valid(void) {
-	return (server_sock_received_packet.received_bytes >= sizeof(srf_ip_conn_packet_header_t) &&
-			memcmp(server_sock_received_packet.buf, SRF_IP_CONN_MAGIC_STR, SRF_IP_CONN_MAGIC_STR_LENGTH) == 0);
-}
-
 void packet_process(void) {
 	srf_ip_conn_packet_header_t *header = (srf_ip_conn_packet_header_t *)server_sock_received_packet.buf;
 
