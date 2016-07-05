@@ -2,7 +2,11 @@
 
 #include <stdio.h>
 #include <string.h>
+#if FSL_RTOS_MQX
+#include <rtcs.h>
+#else
 #include <arpa/inet.h>
+#endif
 
 void srf_ip_conn_packet_init(srf_ip_conn_packet_header_t *packet_header, srf_ip_conn_packet_type_t packet_type) {
 	memcpy(packet_header->magic, SRF_IP_CONN_MAGIC_STR, SRF_IP_CONN_MAGIC_STR_LENGTH);
