@@ -1,4 +1,4 @@
-#include "sock.h"
+#include "srf-ip-conn/common/sock.h"
 
 // Get sockaddr, IPv4 or IPv6.
 void *sock_get_in_addr(struct sockaddr *sa) {

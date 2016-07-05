@@ -1,7 +1,7 @@
 #ifndef SRF_IP_CONN_PACKETS_H_
 #define SRF_IP_CONN_PACKETS_H_
 
-#include "types.h"
+#include "srf-ip-conn/common/types.h"
 
 #define SRF_IP_CONN_MAGIC_STR                                   "SRFIPC"
 #define SRF_IP_CONN_MAGIC_STR_LENGTH                            (sizeof(SRF_IP_CONN_MAGIC_STR)-1)

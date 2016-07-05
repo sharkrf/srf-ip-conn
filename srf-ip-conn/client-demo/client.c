@@ -2,6 +2,7 @@
 #include "client-sock.h"
 #include "packet.h"
 #include "hmac.h"
+#include "config.h"
 
 #include <time.h>
 #include <unistd.h>
@@ -55,7 +56,7 @@ static void client_send_auth(void) {
 	packet_init(&packet.header, SRF_IP_CONN_PACKET_TYPE_AUTH);
 	for (i = 0; i < sizeof(packet.auth.random_data); i++)
 		packet.auth.random_data[i] = rand();
-	hmac_add(client_token, &packet, sizeof(srf_ip_conn_auth_payload_t));
+	hmac_add(client_token, CONFIG_PASSWORD, &packet, sizeof(srf_ip_conn_auth_payload_t));
 	client_sock_send((uint8_t *)&packet, sizeof(srf_ip_conn_packet_header_t) + sizeof(srf_ip_conn_auth_payload_t));
 	time(&client_last_packet_sent_at);
 
@@ -101,7 +102,7 @@ static void client_send_config(void) {
 	snprintf(packet.config.location, sizeof(packet.config.location), "test client location");
 	snprintf(packet.config.description, sizeof(packet.config.description), "test client description");
 
-	hmac_add(client_token, &packet, sizeof(srf_ip_conn_config_payload_t));
+	hmac_add(client_token, CONFIG_PASSWORD, &packet, sizeof(srf_ip_conn_config_payload_t));
 	client_sock_send((uint8_t *)&packet, sizeof(srf_ip_conn_packet_header_t) + sizeof(srf_ip_conn_config_payload_t));
 	time(&client_last_packet_sent_at);
 
@@ -199,7 +200,7 @@ static void client_send_ping(void) {
 	packet_init(&packet.header, SRF_IP_CONN_PACKET_TYPE_PING);
 	for (i = 0; i < sizeof(packet.ping.random_data); i++)
 		packet.ping.random_data[i] = rand();
-	hmac_add(client_token, &packet, sizeof(srf_ip_conn_ping_payload_t));
+	hmac_add(client_token, CONFIG_PASSWORD, &packet, sizeof(srf_ip_conn_ping_payload_t));
 	client_sock_send((uint8_t *)&packet, sizeof(srf_ip_conn_packet_header_t) + sizeof(srf_ip_conn_ping_payload_t));
 	time(&client_last_packet_sent_at);
 }
@@ -213,7 +214,7 @@ void client_send_close(void) {
 	packet_init(&packet.header, SRF_IP_CONN_PACKET_TYPE_CLOSE);
 	for (i = 0; i < sizeof(packet.close.random_data); i++)
 		packet.close.random_data[i] = rand();
-	hmac_add(client_token, &packet, sizeof(srf_ip_conn_close_payload_t));
+	hmac_add(client_token, CONFIG_PASSWORD, &packet, sizeof(srf_ip_conn_close_payload_t));
 	client_sock_send((uint8_t *)&packet, sizeof(srf_ip_conn_packet_header_t) + sizeof(srf_ip_conn_close_payload_t));
 	time(&client_last_packet_sent_at);
 }

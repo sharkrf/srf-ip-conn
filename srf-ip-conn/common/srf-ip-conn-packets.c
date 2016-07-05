@@ -1,4 +1,4 @@
-#include "srf-ip-conn-packets.h"
+#include "srf-ip-conn/common/srf-ip-conn-packets.h"
 
 #include <stdio.h>
 #include <arpa/inet.h>
