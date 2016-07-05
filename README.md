@@ -56,8 +56,6 @@ Server->Client: Data
 -->
 ![Data Diagram](https://cdn.rawgit.com/sharkrf/srf-ip-conn/master/img/data.svg)
 
-If client's sequence number is smaller than the last one received by the server, the server will close the connection. In this case, the client must re-initialize the connection starting with the login process.
-
 ### Closing the connection
 
 Both participants can close the connection gracefully.
