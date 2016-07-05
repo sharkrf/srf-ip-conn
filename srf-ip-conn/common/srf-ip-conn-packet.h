@@ -213,6 +213,9 @@ typedef struct __attribute__((packed)) {
 void srf_ip_conn_packet_init(srf_ip_conn_packet_header_t *packet_header, srf_ip_conn_packet_type_t packet_type);
 flag_t srf_ip_conn_packet_is_header_valid(srf_ip_conn_packet_header_t *packet_header);
 
+void srf_ip_conn_packet_hmac_add(uint8_t token[SRF_IP_CONN_TOKEN_LENGTH], char password[SRF_IP_CONN_MAX_PASSWORD_LENGTH], srf_ip_conn_packet_t *packet, uint16_t payload_length);
+flag_t srf_ip_conn_packet_hmac_check(uint8_t token[SRF_IP_CONN_TOKEN_LENGTH], char password[SRF_IP_CONN_MAX_PASSWORD_LENGTH], srf_ip_conn_packet_t *packet, uint16_t payload_length);
+
 void srf_ip_conn_packet_print_data_raw_payload(srf_ip_conn_data_raw_payload_t *payload);
 void srf_ip_conn_packet_print_data_dmr_payload(srf_ip_conn_data_dmr_payload_t *payload);
 void srf_ip_conn_packet_print_data_dstar_payload(srf_ip_conn_data_dstar_payload_t *payload);

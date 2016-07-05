@@ -2,7 +2,6 @@
 #include "server-sock.h"
 #include "server-client.h"
 #include "config.h"
-#include "hmac.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -61,13 +60,13 @@ static void packet_process_auth(void) {
 	printf("\n");
 
 	// If hash is not matching the HMAC we received in the auth packet, we send a nak.
-	if (!hmac_check(packet_new_connection_data.given_token, CONFIG_PASSWORD, packet, sizeof(srf_ip_conn_auth_payload_t))) {
+	if (!srf_ip_conn_packet_hmac_check(packet_new_connection_data.given_token, CONFIG_PASSWORD, packet, sizeof(srf_ip_conn_auth_payload_t))) {
 		printf("    hmac mismatch, sending nak\n");
 		srf_ip_conn_packet_init(&answer_packet.header, SRF_IP_CONN_PACKET_TYPE_NAK);
 		for (i = 0; i < sizeof(answer_packet.nak.random_data); i++)
 			answer_packet.nak.random_data[i] = rand();
 		answer_packet.nak.result = SRF_IP_CONN_NAK_RESULT_AUTH_INVALID_HMAC;
-		hmac_add(packet_new_connection_data.given_token, CONFIG_PASSWORD, &answer_packet, sizeof(srf_ip_conn_nak_payload_t));
+		srf_ip_conn_packet_hmac_add(packet_new_connection_data.given_token, CONFIG_PASSWORD, &answer_packet, sizeof(srf_ip_conn_nak_payload_t));
 		server_sock_send((uint8_t *)&answer_packet, sizeof(srf_ip_conn_packet_header_t) + sizeof(srf_ip_conn_nak_payload_t), &server_sock_received_packet.from_addr);
 		return;
 	}
@@ -79,7 +78,7 @@ static void packet_process_auth(void) {
 		for (i = 0; i < sizeof(answer_packet.nak.random_data); i++)
 			answer_packet.nak.random_data[i] = rand();
 		answer_packet.nak.result = SRF_IP_CONN_NAK_RESULT_AUTH_INVALID_CLIENT_ID;
-		hmac_add(packet_new_connection_data.given_token, CONFIG_PASSWORD, &answer_packet, sizeof(srf_ip_conn_nak_payload_t));
+		srf_ip_conn_packet_hmac_add(packet_new_connection_data.given_token, CONFIG_PASSWORD, &answer_packet, sizeof(srf_ip_conn_nak_payload_t));
 		server_sock_send((uint8_t *)&answer_packet, sizeof(srf_ip_conn_packet_header_t) + sizeof(srf_ip_conn_nak_payload_t), &server_sock_received_packet.from_addr);
 		return;
 	}
@@ -91,7 +90,7 @@ static void packet_process_auth(void) {
 	for (i = 0; i < sizeof(answer_packet.ack.random_data); i++)
 		answer_packet.ack.random_data[i] = rand();
 	answer_packet.ack.result = SRF_IP_CONN_ACK_RESULT_AUTH;
-	hmac_add(packet_new_connection_data.given_token, CONFIG_PASSWORD, &answer_packet, sizeof(srf_ip_conn_ack_payload_t));
+	srf_ip_conn_packet_hmac_add(packet_new_connection_data.given_token, CONFIG_PASSWORD, &answer_packet, sizeof(srf_ip_conn_ack_payload_t));
 	server_sock_send((uint8_t *)&answer_packet, sizeof(srf_ip_conn_packet_header_t) + sizeof(srf_ip_conn_ack_payload_t), &server_sock_received_packet.from_addr);
 }
 
@@ -108,7 +107,7 @@ static flag_t packet_process_config(void) {
 		printf("  client isn't logged in, ignoring packet\n");
 		return 0;
 	}
-	if (!hmac_check(server_client.token, CONFIG_PASSWORD, packet, sizeof(srf_ip_conn_config_payload_t))) {
+	if (!srf_ip_conn_packet_hmac_check(server_client.token, CONFIG_PASSWORD, packet, sizeof(srf_ip_conn_config_payload_t))) {
 		printf("  invalid hmac, ignoring packet\n");
 		return 0;
 	}
@@ -120,7 +119,7 @@ static flag_t packet_process_config(void) {
 	answer_packet.ack.result = SRF_IP_CONN_ACK_RESULT_CONFIG;
 	for (i = 0; i < sizeof(answer_packet.ack.random_data); i++)
 		answer_packet.ack.random_data[i] = rand();
-	hmac_add(server_client.token, CONFIG_PASSWORD, &answer_packet, sizeof(srf_ip_conn_ack_payload_t));
+	srf_ip_conn_packet_hmac_add(server_client.token, CONFIG_PASSWORD, &answer_packet, sizeof(srf_ip_conn_ack_payload_t));
 	server_sock_send((uint8_t *)&answer_packet, sizeof(srf_ip_conn_packet_header_t) + sizeof(srf_ip_conn_ack_payload_t), &server_sock_received_packet.from_addr);
 	return 1;
 }
@@ -138,7 +137,7 @@ static flag_t packet_process_ping(void) {
 		printf("  client isn't logged in, ignoring packet\n");
 		return 0;
 	}
-	if (!hmac_check(server_client.token, CONFIG_PASSWORD, packet, sizeof(srf_ip_conn_ping_payload_t))) {
+	if (!srf_ip_conn_packet_hmac_check(server_client.token, CONFIG_PASSWORD, packet, sizeof(srf_ip_conn_ping_payload_t))) {
 		printf("  invalid hmac, ignoring packet\n");
 		return 0;
 	}
@@ -147,7 +146,7 @@ static flag_t packet_process_ping(void) {
 	srf_ip_conn_packet_init(&answer_packet.header, SRF_IP_CONN_PACKET_TYPE_PONG);
 	for (i = 0; i < sizeof(answer_packet.pong.random_data); i++)
 		answer_packet.pong.random_data[i] = rand();
-	hmac_add(server_client.token, CONFIG_PASSWORD, &answer_packet, sizeof(srf_ip_conn_pong_payload_t));
+	srf_ip_conn_packet_hmac_add(server_client.token, CONFIG_PASSWORD, &answer_packet, sizeof(srf_ip_conn_pong_payload_t));
 	server_sock_send((uint8_t *)&answer_packet, sizeof(srf_ip_conn_packet_header_t) + sizeof(srf_ip_conn_pong_payload_t), &server_sock_received_packet.from_addr);
 	return 1;
 }
@@ -165,7 +164,7 @@ static void packet_process_close(void) {
 		printf("  client isn't logged in, ignoring packet\n");
 		return;
 	}
-	if (!hmac_check(server_client.token, CONFIG_PASSWORD, packet, sizeof(srf_ip_conn_close_payload_t))) {
+	if (!srf_ip_conn_packet_hmac_check(server_client.token, CONFIG_PASSWORD, packet, sizeof(srf_ip_conn_close_payload_t))) {
 		printf("  invalid hmac, ignoring packet\n");
 		return;
 	}
@@ -177,7 +176,7 @@ static void packet_process_close(void) {
 	answer_packet.ack.result = SRF_IP_CONN_ACK_RESULT_CLOSE;
 	for (i = 0; i < sizeof(answer_packet.ack.random_data); i++)
 		answer_packet.ack.random_data[i] = rand();
-	hmac_add(server_client.token, CONFIG_PASSWORD, &answer_packet, sizeof(srf_ip_conn_ack_payload_t));
+	srf_ip_conn_packet_hmac_add(server_client.token, CONFIG_PASSWORD, &answer_packet, sizeof(srf_ip_conn_ack_payload_t));
 	server_sock_send((uint8_t *)&answer_packet, sizeof(srf_ip_conn_packet_header_t) + sizeof(srf_ip_conn_ack_payload_t), &server_sock_received_packet.from_addr);
 }
 
@@ -192,7 +191,7 @@ static flag_t packet_process_raw(void) {
 		printf("  client isn't logged in, ignoring packet\n");
 		return 0;
 	}
-	if (!hmac_check(server_client.token, CONFIG_PASSWORD, packet, sizeof(srf_ip_conn_config_payload_t))) {
+	if (!srf_ip_conn_packet_hmac_check(server_client.token, CONFIG_PASSWORD, packet, sizeof(srf_ip_conn_config_payload_t))) {
 		printf("  invalid hmac, ignoring packet\n");
 		return 0;
 	}
@@ -214,7 +213,7 @@ static flag_t packet_process_dmr(void) {
 		printf("  client isn't logged in, ignoring packet\n");
 		return 0;
 	}
-	if (!hmac_check(server_client.token, CONFIG_PASSWORD, packet, sizeof(srf_ip_conn_config_payload_t))) {
+	if (!srf_ip_conn_packet_hmac_check(server_client.token, CONFIG_PASSWORD, packet, sizeof(srf_ip_conn_data_dmr_payload_t))) {
 		printf("  invalid hmac, ignoring packet\n");
 		return 0;
 	}
@@ -236,7 +235,7 @@ static flag_t packet_process_dstar(void) {
 		printf("  client isn't logged in, ignoring packet\n");
 		return 0;
 	}
-	if (!hmac_check(server_client.token, CONFIG_PASSWORD, packet, sizeof(srf_ip_conn_config_payload_t))) {
+	if (!srf_ip_conn_packet_hmac_check(server_client.token, CONFIG_PASSWORD, packet, sizeof(srf_ip_conn_data_dstar_payload_t))) {
 		printf("  invalid hmac, ignoring packet\n");
 		return 0;
 	}
@@ -258,7 +257,7 @@ static flag_t packet_process_c4fm(void) {
 		printf("  client isn't logged in, ignoring packet\n");
 		return 0;
 	}
-	if (!hmac_check(server_client.token, CONFIG_PASSWORD, packet, sizeof(srf_ip_conn_config_payload_t))) {
+	if (!srf_ip_conn_packet_hmac_check(server_client.token, CONFIG_PASSWORD, packet, sizeof(srf_ip_conn_data_c4fm_payload_t))) {
 		printf("  invalid hmac, ignoring packet\n");
 		return 0;
 	}
