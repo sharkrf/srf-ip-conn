@@ -1,9 +1,16 @@
-#include "srf-ip-conn/common/srf-ip-conn-packets.h"
+#include "srf-ip-conn/common/srf-ip-conn-packet.h"
 
 #include <stdio.h>
+#include <string.h>
 #include <arpa/inet.h>
 
-void srf_ip_conn_packets_print_data_raw_payload(srf_ip_conn_data_raw_payload_t *payload) {
+void srf_ip_conn_packet_init(srf_ip_conn_packet_header_t *packet_header, srf_ip_conn_packet_type_t packet_type) {
+	memcpy(packet_header->magic, SRF_IP_CONN_MAGIC_STR, SRF_IP_CONN_MAGIC_STR_LENGTH);
+	packet_header->packet_type = packet_type;
+	packet_header->version = 0;
+}
+
+void srf_ip_conn_packet_print_data_raw_payload(srf_ip_conn_data_raw_payload_t *payload) {
 	uint8_t i;
 
 	printf("  seq. no: %u\n", ntohl(payload->seq_no));
@@ -21,7 +28,7 @@ void srf_ip_conn_packets_print_data_raw_payload(srf_ip_conn_data_raw_payload_t *
 	printf("\n");
 }
 
-void srf_ip_conn_packets_print_data_dmr_payload(srf_ip_conn_data_dmr_payload_t *payload) {
+void srf_ip_conn_packet_print_data_dmr_payload(srf_ip_conn_data_dmr_payload_t *payload) {
 	uint8_t i;
 
 	printf("  seq. no: %u\n", ntohl(payload->seq_no));
@@ -54,7 +61,7 @@ void srf_ip_conn_packets_print_data_dmr_payload(srf_ip_conn_data_dmr_payload_t *
 	printf("\n");
 }
 
-void srf_ip_conn_packets_print_data_dstar_payload(srf_ip_conn_data_dstar_payload_t *payload) {
+void srf_ip_conn_packet_print_data_dstar_payload(srf_ip_conn_data_dstar_payload_t *payload) {
 	uint8_t i;
 
 	printf("  seq. no: %u\n", ntohl(payload->seq_no));
@@ -81,7 +88,7 @@ void srf_ip_conn_packets_print_data_dstar_payload(srf_ip_conn_data_dstar_payload
 	printf("\n");
 }
 
-void srf_ip_conn_packets_print_data_c4fm_payload(srf_ip_conn_data_c4fm_payload_t *payload) {
+void srf_ip_conn_packet_print_data_c4fm_payload(srf_ip_conn_data_c4fm_payload_t *payload) {
 	uint8_t i;
 
 	printf("  seq. no: %u\n", ntohl(payload->seq_no));

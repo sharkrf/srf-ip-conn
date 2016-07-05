@@ -79,4 +79,4 @@ UDP packet (*srf_ip_conn_packet_t*) structure:
 Header | Payload
 --- | ---
 
-See [srf-ip-conn/common/srf-ip-conn-packets.h](https://github.com/sharkrf/srf-ip-conn/blob/master/srf-ip-conn/common/srf-ip-conn-packets.h) for used packet structures. Byte order is big-endian.
+See [srf-ip-conn/common/srf-ip-conn-packet.h](https://github.com/sharkrf/srf-ip-conn/blob/master/srf-ip-conn/common/srf-ip-conn-packet.h) for used packet structures. Byte order is big-endian.

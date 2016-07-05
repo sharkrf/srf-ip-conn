@@ -2,7 +2,7 @@
 #define CLIENT_H_
 
 #include "types.h"
-#include "srf-ip-conn-packets.h"
+#include "srf-ip-conn-packet.h"
 
 #define CLIENT_STATE_INIT			0
 #define CLIENT_STATE_LOGIN_SENT		1

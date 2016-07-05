@@ -15,12 +15,6 @@ static struct {
 	time_t last_auth_tried_at;
 } packet_new_connection_data = { .last_auth_tried_at = 0 };
 
-static void packet_init(srf_ip_conn_packet_header_t *packet_header, srf_ip_conn_packet_type_t packet_type) {
-	memcpy(packet_header->magic, SRF_IP_CONN_MAGIC_STR, SRF_IP_CONN_MAGIC_STR_LENGTH);
-	packet_header->packet_type = packet_type;
-	packet_header->version = 0;
-}
-
 static void packet_process_login(void) {
 	srf_ip_conn_packet_t *packet = (srf_ip_conn_packet_t *)server_sock_received_packet.buf;
 	srf_ip_conn_packet_t answer_packet;
@@ -31,7 +25,7 @@ static void packet_process_login(void) {
 		return;
 	}
 
-	packet_init(&answer_packet.header, SRF_IP_CONN_PACKET_TYPE_TOKEN);
+	srf_ip_conn_packet_init(&answer_packet.header, SRF_IP_CONN_PACKET_TYPE_TOKEN);
 	packet_new_connection_data.client_id = ntohl(packet->login.client_id);
 	printf("  got login packet from id %u, answering with token ", packet_new_connection_data.client_id);
 	for (i = 0; i < sizeof(packet_new_connection_data.given_token); i++) {
@@ -69,7 +63,7 @@ static void packet_process_auth(void) {
 	// If hash is not matching the HMAC we received in the auth packet, we send a nak.
 	if (!hmac_check(packet_new_connection_data.given_token, CONFIG_PASSWORD, packet, sizeof(srf_ip_conn_auth_payload_t))) {
 		printf("    hmac mismatch, sending nak\n");
-		packet_init(&answer_packet.header, SRF_IP_CONN_PACKET_TYPE_NAK);
+		srf_ip_conn_packet_init(&answer_packet.header, SRF_IP_CONN_PACKET_TYPE_NAK);
 		for (i = 0; i < sizeof(answer_packet.nak.random_data); i++)
 			answer_packet.nak.random_data[i] = rand();
 		answer_packet.nak.result = SRF_IP_CONN_NAK_RESULT_AUTH_INVALID_HMAC;
@@ -81,7 +75,7 @@ static void packet_process_auth(void) {
 	// If user tries to log in with an invalid client id, we reject it with a nak.
 	if (packet_new_connection_data.client_id == 12345) {
 		printf("    invalid client id, sending nak\n");
-		packet_init(&answer_packet.header, SRF_IP_CONN_PACKET_TYPE_NAK);
+		srf_ip_conn_packet_init(&answer_packet.header, SRF_IP_CONN_PACKET_TYPE_NAK);
 		for (i = 0; i < sizeof(answer_packet.nak.random_data); i++)
 			answer_packet.nak.random_data[i] = rand();
 		answer_packet.nak.result = SRF_IP_CONN_NAK_RESULT_AUTH_INVALID_CLIENT_ID;
@@ -93,7 +87,7 @@ static void packet_process_auth(void) {
 	// Client is now logged in.
 	server_client_login(packet_new_connection_data.client_id, packet_new_connection_data.given_token, &server_sock_received_packet.from_addr);
 
-	packet_init(&answer_packet.header, SRF_IP_CONN_PACKET_TYPE_ACK);
+	srf_ip_conn_packet_init(&answer_packet.header, SRF_IP_CONN_PACKET_TYPE_ACK);
 	for (i = 0; i < sizeof(answer_packet.ack.random_data); i++)
 		answer_packet.ack.random_data[i] = rand();
 	answer_packet.ack.result = SRF_IP_CONN_ACK_RESULT_AUTH;
@@ -122,7 +116,7 @@ static flag_t packet_process_config(void) {
 	printf("  got valid config packet\n");
 	server_client_config(&packet->config);
 
-	packet_init(&answer_packet.header, SRF_IP_CONN_PACKET_TYPE_ACK);
+	srf_ip_conn_packet_init(&answer_packet.header, SRF_IP_CONN_PACKET_TYPE_ACK);
 	answer_packet.ack.result = SRF_IP_CONN_ACK_RESULT_CONFIG;
 	for (i = 0; i < sizeof(answer_packet.ack.random_data); i++)
 		answer_packet.ack.random_data[i] = rand();
@@ -150,7 +144,7 @@ static flag_t packet_process_ping(void) {
 	}
 
 	printf("  got ping, sending pong\n");
-	packet_init(&answer_packet.header, SRF_IP_CONN_PACKET_TYPE_PONG);
+	srf_ip_conn_packet_init(&answer_packet.header, SRF_IP_CONN_PACKET_TYPE_PONG);
 	for (i = 0; i < sizeof(answer_packet.pong.random_data); i++)
 		answer_packet.pong.random_data[i] = rand();
 	hmac_add(server_client.token, CONFIG_PASSWORD, &answer_packet, sizeof(srf_ip_conn_pong_payload_t));
@@ -179,7 +173,7 @@ static void packet_process_close(void) {
 	printf("  got valid close packet\n");
 	server_client_logout();
 
-	packet_init(&answer_packet.header, SRF_IP_CONN_PACKET_TYPE_ACK);
+	srf_ip_conn_packet_init(&answer_packet.header, SRF_IP_CONN_PACKET_TYPE_ACK);
 	answer_packet.ack.result = SRF_IP_CONN_ACK_RESULT_CLOSE;
 	for (i = 0; i < sizeof(answer_packet.ack.random_data); i++)
 		answer_packet.ack.random_data[i] = rand();
@@ -204,7 +198,7 @@ static flag_t packet_process_raw(void) {
 	}
 
 	printf("  got valid raw data\n");
-	srf_ip_conn_packets_print_data_raw_payload(&packet->data_raw);
+	srf_ip_conn_packet_print_data_raw_payload(&packet->data_raw);
 
 	return 1;
 }
@@ -226,7 +220,7 @@ static flag_t packet_process_dmr(void) {
 	}
 
 	printf("  got valid dmr data\n");
-	srf_ip_conn_packets_print_data_dmr_payload(&packet->data_dmr);
+	srf_ip_conn_packet_print_data_dmr_payload(&packet->data_dmr);
 
 	return 1;
 }
@@ -248,7 +242,7 @@ static flag_t packet_process_dstar(void) {
 	}
 
 	printf("  got valid dstar data\n");
-	srf_ip_conn_packets_print_data_dstar_payload(&packet->data_dstar);
+	srf_ip_conn_packet_print_data_dstar_payload(&packet->data_dstar);
 
 	return 1;
 }
@@ -270,7 +264,7 @@ static flag_t packet_process_c4fm(void) {
 	}
 
 	printf("  got valid c4fm data\n");
-	srf_ip_conn_packets_print_data_c4fm_payload(&packet->data_c4fm);
+	srf_ip_conn_packet_print_data_c4fm_payload(&packet->data_c4fm);
 
 	return 1;
 }

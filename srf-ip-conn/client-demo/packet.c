@@ -6,12 +6,6 @@
 
 #include <string.h>
 
-void packet_init(srf_ip_conn_packet_header_t *packet_header, srf_ip_conn_packet_type_t packet_type) {
-	memcpy(packet_header->magic, SRF_IP_CONN_MAGIC_STR, SRF_IP_CONN_MAGIC_STR_LENGTH);
-	packet_header->packet_type = packet_type;
-	packet_header->version = 0;
-}
-
 static void packet_process_token(void) {
 	srf_ip_conn_packet_t *packet = (srf_ip_conn_packet_t *)client_sock_received_packet.buf;
 
@@ -80,7 +74,7 @@ static void packet_process_raw(void) {
 		return;
 	}
 
-	srf_ip_conn_packets_print_data_raw_payload(&packet->data_raw);
+	srf_ip_conn_packet_print_data_raw_payload(&packet->data_raw);
 	client_got_valid_packet();
 }
 
@@ -96,7 +90,7 @@ static void packet_process_dmr(void) {
 		return;
 	}
 
-	srf_ip_conn_packets_print_data_dmr_payload(&packet->data_dmr);
+	srf_ip_conn_packet_print_data_dmr_payload(&packet->data_dmr);
 	client_got_valid_packet();
 }
 
@@ -112,7 +106,7 @@ static void packet_process_dstar(void) {
 		return;
 	}
 
-	srf_ip_conn_packets_print_data_dstar_payload(&packet->data_dstar);
+	srf_ip_conn_packet_print_data_dstar_payload(&packet->data_dstar);
 	client_got_valid_packet();
 }
 
@@ -128,7 +122,7 @@ static void packet_process_c4fm(void) {
 		return;
 	}
 
-	srf_ip_conn_packets_print_data_c4fm_payload(&packet->data_c4fm);
+	srf_ip_conn_packet_print_data_c4fm_payload(&packet->data_c4fm);
 	client_got_valid_packet();
 }
 

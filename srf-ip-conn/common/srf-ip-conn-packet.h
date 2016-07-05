@@ -210,9 +210,11 @@ typedef struct __attribute__((packed)) {
     };
 } srf_ip_conn_packet_t;
 
-void srf_ip_conn_packets_print_data_raw_payload(srf_ip_conn_data_raw_payload_t *payload);
-void srf_ip_conn_packets_print_data_dmr_payload(srf_ip_conn_data_dmr_payload_t *payload);
-void srf_ip_conn_packets_print_data_dstar_payload(srf_ip_conn_data_dstar_payload_t *payload);
-void srf_ip_conn_packets_print_data_c4fm_payload(srf_ip_conn_data_c4fm_payload_t *payload);
+void srf_ip_conn_packet_init(srf_ip_conn_packet_header_t *packet_header, srf_ip_conn_packet_type_t packet_type);
+
+void srf_ip_conn_packet_print_data_raw_payload(srf_ip_conn_data_raw_payload_t *payload);
+void srf_ip_conn_packet_print_data_dmr_payload(srf_ip_conn_data_dmr_payload_t *payload);
+void srf_ip_conn_packet_print_data_dstar_payload(srf_ip_conn_data_dstar_payload_t *payload);
+void srf_ip_conn_packet_print_data_c4fm_payload(srf_ip_conn_data_c4fm_payload_t *payload);
 
 #endif

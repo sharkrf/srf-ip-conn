@@ -1,7 +1,7 @@
 #ifndef SERVER_SOCK_H_
 #define SERVER_SOCK_H_
 
-#include "srf-ip-conn-packets.h"
+#include "srf-ip-conn-packet.h"
 
 #include <netinet/in.h>
 

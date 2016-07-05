@@ -39,7 +39,7 @@ static void client_send_login(void) {
 
 	printf("client: sending login\n");
 
-	packet_init(&packet.header, SRF_IP_CONN_PACKET_TYPE_LOGIN);
+	srf_ip_conn_packet_init(&packet.header, SRF_IP_CONN_PACKET_TYPE_LOGIN);
 	packet.login.client_id = htonl(client_id);
 	client_sock_send((uint8_t *)&packet, sizeof(srf_ip_conn_packet_header_t) + sizeof(srf_ip_conn_login_payload_t));
 	time(&client_last_packet_sent_at);
@@ -53,7 +53,7 @@ static void client_send_auth(void) {
 
 	printf("  sending auth\n");
 
-	packet_init(&packet.header, SRF_IP_CONN_PACKET_TYPE_AUTH);
+	srf_ip_conn_packet_init(&packet.header, SRF_IP_CONN_PACKET_TYPE_AUTH);
 	for (i = 0; i < sizeof(packet.auth.random_data); i++)
 		packet.auth.random_data[i] = rand();
 	hmac_add(client_token, CONFIG_PASSWORD, &packet, sizeof(srf_ip_conn_auth_payload_t));
@@ -87,7 +87,7 @@ static void client_send_config(void) {
 
 	printf("client: sending config\n");
 
-	packet_init(&packet.header, SRF_IP_CONN_PACKET_TYPE_CONFIG);
+	srf_ip_conn_packet_init(&packet.header, SRF_IP_CONN_PACKET_TYPE_CONFIG);
 
 	snprintf(packet.config.operator_callsign, sizeof(packet.config.operator_callsign), "HA2NON");
 	snprintf(packet.config.hw_manufacturer, sizeof(packet.config.hw_manufacturer), "SharkRF");
@@ -197,7 +197,7 @@ static void client_send_ping(void) {
 
 	printf("client: sending ping\n");
 
-	packet_init(&packet.header, SRF_IP_CONN_PACKET_TYPE_PING);
+	srf_ip_conn_packet_init(&packet.header, SRF_IP_CONN_PACKET_TYPE_PING);
 	for (i = 0; i < sizeof(packet.ping.random_data); i++)
 		packet.ping.random_data[i] = rand();
 	hmac_add(client_token, CONFIG_PASSWORD, &packet, sizeof(srf_ip_conn_ping_payload_t));
@@ -211,7 +211,7 @@ void client_send_close(void) {
 
 	printf("client: sending close packet\n");
 
-	packet_init(&packet.header, SRF_IP_CONN_PACKET_TYPE_CLOSE);
+	srf_ip_conn_packet_init(&packet.header, SRF_IP_CONN_PACKET_TYPE_CLOSE);
 	for (i = 0; i < sizeof(packet.close.random_data); i++)
 		packet.close.random_data[i] = rand();
 	hmac_add(client_token, CONFIG_PASSWORD, &packet, sizeof(srf_ip_conn_close_payload_t));

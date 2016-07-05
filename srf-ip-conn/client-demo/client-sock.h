@@ -1,7 +1,7 @@
 #ifndef CLIENT_SOCK_H_
 #define CLIENT_SOCK_H_
 
-#include "srf-ip-conn-packets.h"
+#include "srf-ip-conn-packet.h"
 
 #include <netinet/in.h>
 
