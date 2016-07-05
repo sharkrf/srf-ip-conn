@@ -98,7 +98,7 @@ static void client_send_config(void) {
 	packet.config.tx_power = 20;
 	packet.config.latitude = 47.6411825;
 	packet.config.longitude = 18.3020316;
-	packet.config.height = htons(123);
+	packet.config.height_agl = htons(123);
 	snprintf(packet.config.location, sizeof(packet.config.location), "test client location");
 	snprintf(packet.config.description, sizeof(packet.config.description), "test client description");
 

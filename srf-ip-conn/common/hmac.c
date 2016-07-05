@@ -3,13 +3,10 @@
 
 #include <string.h>
 
-static void hmac_calc(uint8_t token[SRF_IP_CONN_TOKEN_LENGTH], char password[SRF_IP_CONN_MAX_PASSWORD_LENGTH+1], srf_ip_conn_packet_t *packet, uint16_t payload_length, uint8_t dst[SHA256_DIGEST_LENGTH]) {
+static void hmac_calc(uint8_t token[SRF_IP_CONN_TOKEN_LENGTH], char password[SRF_IP_CONN_MAX_PASSWORD_LENGTH], srf_ip_conn_packet_t *packet, uint16_t payload_length, uint8_t dst[SHA256_DIGEST_LENGTH]) {
 	SHA256_CTX ctx256;
 	uint8_t tmp[SRF_IP_CONN_TOKEN_LENGTH+SRF_IP_CONN_MAX_PASSWORD_LENGTH+sizeof(srf_ip_conn_packet_t)-sizeof(srf_ip_conn_packet_header_t)-SHA256_DIGEST_LENGTH];
-	uint8_t passwd_len;
-
-	password[SRF_IP_CONN_MAX_PASSWORD_LENGTH] = 0;
-	passwd_len = strlen(password);
+	uint8_t passwd_len = strlen(password);
 
 	// Copying token to tmp.
 	memcpy(tmp, token, SRF_IP_CONN_TOKEN_LENGTH);
@@ -24,11 +21,11 @@ static void hmac_calc(uint8_t token[SRF_IP_CONN_TOKEN_LENGTH], char password[SRF
 	SHA256_Final(dst, &ctx256);
 }
 
-void hmac_add(uint8_t token[SRF_IP_CONN_TOKEN_LENGTH], char password[SRF_IP_CONN_MAX_PASSWORD_LENGTH+1], srf_ip_conn_packet_t *packet, uint16_t payload_length) {
+void hmac_add(uint8_t token[SRF_IP_CONN_TOKEN_LENGTH], char password[SRF_IP_CONN_MAX_PASSWORD_LENGTH], srf_ip_conn_packet_t *packet, uint16_t payload_length) {
 	hmac_calc(token, password, packet, payload_length, (uint8_t *)packet + sizeof(srf_ip_conn_packet_header_t) + payload_length - SHA256_DIGEST_LENGTH);
 }
 
-flag_t hmac_check(uint8_t token[SRF_IP_CONN_TOKEN_LENGTH], char password[SRF_IP_CONN_MAX_PASSWORD_LENGTH+1], srf_ip_conn_packet_t *packet, uint16_t payload_length) {
+flag_t hmac_check(uint8_t token[SRF_IP_CONN_TOKEN_LENGTH], char password[SRF_IP_CONN_MAX_PASSWORD_LENGTH], srf_ip_conn_packet_t *packet, uint16_t payload_length) {
 	uint8_t hash[SHA256_DIGEST_LENGTH];
 
 	hmac_calc(token, password, packet, payload_length, hash);

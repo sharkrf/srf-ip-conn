@@ -77,7 +77,7 @@ typedef struct __attribute__((packed)) {
     uint8_t tx_power;                                           // ERP in dBm
     float latitude;                                             // Latitude
     float longitude;                                            // Longitude
-    int16_t height;                                             // Height above ground level in meters
+    int16_t height_agl;                                         // Height above ground level in meters
     char location[33];                                          // Location, null-terminated
     char description[33];                                       // Description, null-terminated
     uint8_t hmac[32];                                           // Hashed Message Auth Code, sha256 ( token + secret password + all fields of this struct except hmac )

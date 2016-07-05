@@ -57,7 +57,7 @@ void server_client_config(srf_ip_conn_config_payload_t *config_payload) {
 	printf("    tx power: %u dbm\n", config_payload->tx_power);
 	printf("    latitude: %f\n", config_payload->latitude);
 	printf("    longitude: %f\n", config_payload->longitude);
-	printf("    height: %d m\n", ntohs(config_payload->height));
+	printf("    height: %d m\n", ntohs(config_payload->height_agl));
 	config_payload->location[sizeof(config_payload->location)-1] = 0;
 	printf("    location: %s\n", config_payload->location);
 	config_payload->description[sizeof(config_payload->description)-1] = 0;
