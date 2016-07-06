@@ -11,8 +11,8 @@
 static struct {
 	uint32_t client_id;
 	uint8_t given_token[8];
-	time_t last_auth_tried_at;
-} packet_new_connection_data = { .last_auth_tried_at = 0 };
+	time_t last_auth_fail_at;
+} packet_new_connection_data = { .last_auth_fail_at = 0 };
 
 static void packet_process_login(void) {
 	srf_ip_conn_packet_t *packet = (srf_ip_conn_packet_t *)server_sock_received_packet.buf;
@@ -41,13 +41,11 @@ static void packet_process_auth(void) {
 	srf_ip_conn_packet_t answer_packet;
 	uint8_t i;
 
-	// Limiting auth tries for only one try per 5 seconds.
-	if (time(NULL) - packet_new_connection_data.last_auth_tried_at < 5) {
-		printf("  got auth packet, but timeout hasn't been expired\n");
+	// Limiting auth retries for only one per 5 seconds.
+	if (time(NULL) - packet_new_connection_data.last_auth_fail_at < 5) {
+		printf("  got auth packet, but retry timeout hasn't been expired\n");
 		return;
 	}
-
-	time(&packet_new_connection_data.last_auth_tried_at);
 
 	if (server_sock_received_packet.received_bytes != sizeof(srf_ip_conn_packet_header_t)+sizeof(srf_ip_conn_auth_payload_t)) {
 		printf("  packet is %u bytes, not %lu, ignoring\n", server_sock_received_packet.received_bytes, sizeof(srf_ip_conn_packet_header_t)+sizeof(srf_ip_conn_auth_payload_t));
@@ -61,6 +59,8 @@ static void packet_process_auth(void) {
 
 	// If hash is not matching the HMAC we received in the auth packet, we send a nak.
 	if (!srf_ip_conn_packet_hmac_check(packet_new_connection_data.given_token, CONFIG_PASSWORD, packet, sizeof(srf_ip_conn_auth_payload_t))) {
+		time(&packet_new_connection_data.last_auth_fail_at);
+
 		printf("    hmac mismatch, sending nak\n");
 		srf_ip_conn_packet_init(&answer_packet.header, SRF_IP_CONN_PACKET_TYPE_NAK);
 		for (i = 0; i < sizeof(answer_packet.nak.random_data); i++)
