@@ -1,5 +1,5 @@
-#ifndef SOCK_H_
-#define SOCK_H_
+#ifndef SRF_IP_CONN_SOCK_H_
+#define SRF_IP_CONN_SOCK_H_
 
 #include <arpa/inet.h>
 

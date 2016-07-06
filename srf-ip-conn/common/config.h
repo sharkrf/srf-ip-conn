@@ -1,5 +1,5 @@
-#ifndef CONFIG_H_
-#define CONFIG_H_
+#ifndef SRF_IP_CONN_CONFIG_H_
+#define SRF_IP_CONN_CONFIG_H_
 
 #define CONFIG_PASSWORD		"i need a beer"
 #define CONFIG_SERVER_PORT	65100

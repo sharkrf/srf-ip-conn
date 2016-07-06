@@ -1,5 +1,5 @@
-#ifndef SRF_IP_CONN_PACKETS_H_
-#define SRF_IP_CONN_PACKETS_H_
+#ifndef SRF_IP_CONN_PACKET_H_
+#define SRF_IP_CONN_PACKET_H_
 
 #include "srf-ip-conn/common/types.h"
 
