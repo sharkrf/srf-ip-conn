@@ -46,7 +46,7 @@ void srf_ip_conn_packet_print_data_raw_payload(srf_ip_conn_data_raw_payload_t *p
 	uint8_t i;
 
 	printf("  seq. no: %u\n", ntohl(payload->seq_no));
-	printf("  call session id: %u\n", ntohl(payload->call_session_id));
+	printf("  call session id: 0x%.8x\n", ntohl(payload->call_session_id));
 	printf("  rssi: %d dbm\n", payload->rssi_dbm);
 	printf("  payload type: %u", payload->packet_type);
 	switch (payload->packet_type) {
@@ -64,7 +64,7 @@ void srf_ip_conn_packet_print_data_dmr_payload(srf_ip_conn_data_dmr_payload_t *p
 	uint8_t i;
 
 	printf("  seq. no: %u\n", ntohl(payload->seq_no));
-	printf("  call session id: %u\n", ntohl(payload->call_session_id));
+	printf("  call session id: 0x%.8x\n", ntohl(payload->call_session_id));
 	printf("  dst id: %u\n", (payload->dst_id[0] << 16) | (payload->dst_id[1] << 8) | (payload->dst_id[2]));
 	printf("  src id: %u\n", (payload->src_id[0] << 16) | (payload->src_id[1] << 8) | (payload->src_id[2]));
 	printf("  tdma channel: %u\n", payload->tdma_channel);
@@ -97,7 +97,7 @@ void srf_ip_conn_packet_print_data_dstar_payload(srf_ip_conn_data_dstar_payload_
 	uint8_t i;
 
 	printf("  seq. no: %u\n", ntohl(payload->seq_no));
-	printf("  call session id: %u\n", ntohl(payload->call_session_id));
+	printf("  call session id: 0x%.8x\n", ntohl(payload->call_session_id));
 	payload->dst_callsign[sizeof(payload->dst_callsign)-1] = 0;
 	printf("  dst callsign: %s\n", payload->dst_callsign);
 	payload->src_callsign[sizeof(payload->src_callsign)-1] = 0;
@@ -124,7 +124,7 @@ void srf_ip_conn_packet_print_data_c4fm_payload(srf_ip_conn_data_c4fm_payload_t 
 	uint8_t i;
 
 	printf("  seq. no: %u\n", ntohl(payload->seq_no));
-	printf("  call session id: %u\n", ntohl(payload->call_session_id));
+	printf("  call session id: 0x%.8x\n", ntohl(payload->call_session_id));
 	payload->dst_callsign[sizeof(payload->dst_callsign)-1] = 0;
 	printf("  dst callsign: %s\n", payload->dst_callsign);
 	payload->src_callsign[sizeof(payload->src_callsign)-1] = 0;
