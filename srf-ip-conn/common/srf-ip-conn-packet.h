@@ -100,15 +100,12 @@ typedef struct __attribute__((packed)) {
 
 // RAW
 
-#define SRF_IP_CONN_DATA_RAW_PACKET_TYPE_DATA                   0
-#define SRF_IP_CONN_DATA_RAW_PACKET_TYPE_CALL_END               1
-typedef uint8_t srf_ip_conn_data_raw_packet_type_t;
-
 typedef struct __attribute__((packed)) {
     uint32_t seq_no;                                            // Sequence number (starts from 0 and incremented for every data packet for the whole connection)
     uint32_t call_session_id;                                   // Random 32-bit value for the call.
     int8_t rssi_dbm;                                            // Received signal strength
-    srf_ip_conn_data_raw_packet_type_t packet_type;
+    uint8_t tdma_channel                        : 1;
+    uint8_t reserved                            : 7;
     uint8_t length;                                             // Length of raw data in bytes
     uint8_t data[120];                                          // Raw data
     uint8_t hmac[32];                                           // Hashed Message Auth Code, sha256 ( token + secret password + all fields of this struct except hmac )

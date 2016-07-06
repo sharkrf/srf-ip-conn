@@ -48,11 +48,7 @@ void srf_ip_conn_packet_print_data_raw_payload(srf_ip_conn_data_raw_payload_t *p
 	printf("  seq. no: %u\n", ntohl(payload->seq_no));
 	printf("  call session id: 0x%.8x\n", ntohl(payload->call_session_id));
 	printf("  rssi: %d dbm\n", payload->rssi_dbm);
-	printf("  payload type: %u", payload->packet_type);
-	switch (payload->packet_type) {
-		default: printf("data\n"); break;
-		case SRF_IP_CONN_DATA_RAW_PACKET_TYPE_CALL_END: printf("call end\n"); break;
-	}
+	printf("  tdma channel: %u", payload->tdma_channel);
 	printf("  length: %u\n", payload->length);
 	printf("  payload: ");
 	for (i = 0; i < sizeof(payload->data); i++)
