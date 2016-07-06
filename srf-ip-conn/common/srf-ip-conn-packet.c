@@ -130,7 +130,7 @@ void srf_ip_conn_packet_print_data_c4fm_payload(srf_ip_conn_data_c4fm_payload_t 
 	payload->src_callsign[sizeof(payload->src_callsign)-1] = 0;
 	printf("  src callsign: %s\n", payload->src_callsign);
 	printf("  rssi: %d dbm\n", payload->rssi_dbm);
-	printf("  c4fm packet type: %u (", payload->packet_type);
+	printf("  c4fm packet type: %u ", payload->packet_type);
 	switch (payload->packet_type) {
 		case SRF_IP_CONN_DATA_C4FM_PACKET_TYPE_HEADER: printf("header\n"); break;
 		case SRF_IP_CONN_DATA_C4FM_PACKET_TYPE_VDMODE1: printf("vdmode1\n"); break;
