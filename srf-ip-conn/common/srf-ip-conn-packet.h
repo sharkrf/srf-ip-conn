@@ -126,6 +126,7 @@ typedef struct __attribute__((packed)) {
 #define SRF_IP_CONN_DATA_DMR_SLOT_TYPE_VOICE_DATA_D             0x0d
 #define SRF_IP_CONN_DATA_DMR_SLOT_TYPE_VOICE_DATA_E             0x0e
 #define SRF_IP_CONN_DATA_DMR_SLOT_TYPE_VOICE_DATA_F             0x0f
+#define SRF_IP_CONN_DATA_DMR_SLOT_TYPE_PI_HEADER                0x10
 typedef uint8_t srf_ip_conn_data_dmr_slot_type_t;
 
 typedef struct __attribute__((packed)) {
@@ -135,9 +136,9 @@ typedef struct __attribute__((packed)) {
     uint8_t src_id[3];                                          // Source DMR ID
     uint8_t tdma_channel                        : 1;
     uint8_t call_type                           : 1;            // Private = 0; Group = 1
-    uint8_t reserved                            : 6;
-    srf_ip_conn_data_dmr_slot_type_t slot_type  : 4;
     uint8_t color_code                          : 4;
+    uint8_t reserved                            : 2;
+    srf_ip_conn_data_dmr_slot_type_t slot_type;
     int8_t rssi_dbm;                                            // Received signal strength
     uint8_t data[33];                                           // Raw DMR data
     uint8_t hmac[32];                                           // Hashed Message Auth Code, sha256 ( token + secret password + all fields of this struct except hmac )

@@ -79,6 +79,7 @@ void srf_ip_conn_packet_print_data_dmr_payload(srf_ip_conn_data_dmr_payload_t *p
 		case SRF_IP_CONN_DATA_DMR_SLOT_TYPE_VOICE_DATA_D: printf("voice data d\n"); break;
 		case SRF_IP_CONN_DATA_DMR_SLOT_TYPE_VOICE_DATA_E: printf("voice data e\n"); break;
 		case SRF_IP_CONN_DATA_DMR_SLOT_TYPE_VOICE_DATA_F: printf("voice data f\n"); break;
+		case SRF_IP_CONN_DATA_DMR_SLOT_TYPE_PI_HEADER: printf("pi header\n"); break;
 		default: printf("unknown\n"); break;
 	}
 	printf("  color code: %u\n", payload->color_code);
