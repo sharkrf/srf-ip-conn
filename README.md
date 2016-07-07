@@ -1,4 +1,4 @@
-# SharkRF IP Connector Protocol (Draft)
+# SharkRF IP Connector Protocol
 
 This is the protocol used by [SharkRF openSPOT](https://www.sharkrf.com/products/openspot/)'s UDP API to allow 3rd party developers to create their own applications which communicate using openSPOT. The protocol is designed for simplicity.
 
