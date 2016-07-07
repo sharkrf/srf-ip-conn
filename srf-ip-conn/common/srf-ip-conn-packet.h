@@ -145,10 +145,48 @@ typedef struct __attribute__((packed)) {
 
 // D-STAR
 
-#define SRF_IP_CONN_DATA_DSTAR_PACKET_TYPE_DATA                 0x00
-#define SRF_IP_CONN_DATA_DSTAR_PACKET_TYPE_CALL_START           0x01
-#define SRF_IP_CONN_DATA_DSTAR_PACKET_TYPE_CALL_END             0x02
+// To reduce overhead, D-STAR frames should be stored in an srf_ip_conn_data_dstar_storage_t struct.
+// An srf_ip_conn_data_dstar_payload_t data packet should only be sent to the network if there's
+// a header, or terminator packet in it, or the storage is full with data packets.
+//
+// As the decoded D-STAR header is 39 bytes long (without the 16 bit CRC), a complete D-STAR header
+// is transmitted with packet_types[0] = SRF_IP_CONN_DATA_DSTAR_PACKET_TYPE_HEADER and packet_count
+// set to 1.
+// When a packet type is SRF_IP_CONN_DATA_DSTAR_PACKET_TYPE_TERMINATOR, the data for the corresponding
+// packet in the storage is ignored.
+
+#define SRF_IP_CONN_DATA_DSTAR_PACKET_TYPE_HEADER               0x00
+#define SRF_IP_CONN_DATA_DSTAR_PACKET_TYPE_DATA                 0x01
+#define SRF_IP_CONN_DATA_DSTAR_PACKET_TYPE_TERMINATOR           0x02
 typedef uint8_t srf_ip_conn_data_dstar_packet_type_t;
+
+typedef struct __attribute__((packed)) {
+    struct __attribute__((packed)) {
+    	uint8_t is_data                         : 1;
+        uint8_t via_repeater                    : 1;
+        uint8_t interruption                    : 1;
+        uint8_t is_control_signal               : 1;
+        uint8_t is_urgent                       : 1;
+        uint8_t type                            : 3;
+    } flag1;
+    uint8_t flag2;
+    uint8_t flag3;
+    char dst_rptr_callsign[8];
+    char src_rptr_callsign[8];
+    char dst_callsign[8];
+    char src_callsign[8];
+    char src_callsign_suffix[8];
+} srf_ip_conn_data_dstar_decoded_header_t;
+
+typedef struct __attribute__((packed)) {
+    uint8_t packet_count;                                       // Number of D-STAR packets in current packet, max 9
+    srf_ip_conn_data_dstar_packet_type_t packet_types[9];       // Type of each packet in the current packet
+    int8_t rssi_dbm_values[9];                                  // RSSI of each packet in the current packet
+    union {
+        srf_ip_conn_data_dstar_decoded_header_t decoded_header;
+        uint8_t data[9][12];                                    // Raw D-STAR packet data (9 packets, 108 bytes)
+    };
+} srf_ip_conn_data_dstar_storage_t;
 
 typedef struct __attribute__((packed)) {
     uint32_t seq_no;                                            // Sequence number (starts from 0 and incremented for every data packet for the whole connection)
@@ -156,12 +194,9 @@ typedef struct __attribute__((packed)) {
     uint8_t dst_callsign[9];                                    // Destination callsign, null-terminated
     uint8_t src_callsign[9];                                    // Source callsign, null-terminated
     uint8_t src_callsign_suffix[5];                             // Source callsign suffix, null-terminated
-    int8_t rssi_dbm;                                            // Received signal strength
-    uint8_t packet_count;                                       // Number of D-STAR packets in current packet, max 9
-    srf_ip_conn_data_dstar_packet_type_t packet_types[9];       // Type of each packet in the current packet
-    uint8_t data[108];                                          // Raw D-STAR packet data (12 bytes * 9 packets)
+    srf_ip_conn_data_dstar_storage_t storage;
     uint8_t hmac[32];                                           // Hashed Message Auth Code, sha256 ( token + secret password + all fields of this struct except hmac )
-} srf_ip_conn_data_dstar_payload_t;                             // 182 bytes total
+} srf_ip_conn_data_dstar_payload_t;                             // 190 bytes total
 
 // C4FM
 

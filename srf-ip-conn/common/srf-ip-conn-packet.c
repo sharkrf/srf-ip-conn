@@ -91,6 +91,7 @@ void srf_ip_conn_packet_print_data_dmr_payload(srf_ip_conn_data_dmr_payload_t *p
 
 void srf_ip_conn_packet_print_data_dstar_payload(srf_ip_conn_data_dstar_payload_t *payload) {
 	uint8_t i;
+	uint8_t j;
 
 	printf("  seq. no: %u\n", ntohl(payload->seq_no));
 	printf("  call session id: 0x%.8x\n", ntohl(payload->call_session_id));
@@ -99,21 +100,27 @@ void srf_ip_conn_packet_print_data_dstar_payload(srf_ip_conn_data_dstar_payload_
 	payload->src_callsign[sizeof(payload->src_callsign)-1] = 0;
 	payload->src_callsign_suffix[sizeof(payload->src_callsign_suffix)-1] = 0;
 	printf("  src callsign: %s/%s\n", payload->src_callsign, payload->src_callsign_suffix);
-	printf("  rssi: %d dbm\n", payload->rssi_dbm);
 
-	printf("  packets: %u\n", payload->packet_count);
-	for (i = 0; i < payload->packet_count; i++) {
-		printf("  packet type %u: %u ", i, payload->packet_types[i]);
-		switch (payload->packet_types[i]) {
-			default: printf("data\n"); break;
-			case SRF_IP_CONN_DATA_DSTAR_PACKET_TYPE_CALL_START: printf("call start\n"); break;
-			case SRF_IP_CONN_DATA_DSTAR_PACKET_TYPE_CALL_END: printf("call end\n"); break;
+	payload->storage.packet_count = min(payload->storage.packet_count, sizeof(payload->storage.packet_types));
+	printf("  packets: %u\n", payload->storage.packet_count);
+	if (payload->storage.packet_count == 1 && payload->storage.packet_types[0] == SRF_IP_CONN_DATA_DSTAR_PACKET_TYPE_HEADER) {
+		printf("  packet type 0: header\n");
+		printf("  rssi: %d dbm\n", payload->storage.rssi_dbm_values[0]);
+	} else {
+		for (i = 0; i < payload->storage.packet_count; i++) {
+			printf("  packet type %u: %u ", i, payload->storage.packet_types[i]);
+			switch (payload->storage.packet_types[i]) {
+				default: printf("invalid\n"); break;
+				case SRF_IP_CONN_DATA_DSTAR_PACKET_TYPE_DATA: printf("data\n"); break;
+				case SRF_IP_CONN_DATA_DSTAR_PACKET_TYPE_TERMINATOR: printf("terminator\n"); break;
+			}
+			printf("  rssi: %d dbm\n", payload->storage.rssi_dbm_values[i]);
+			printf("  payload: ");
+			for (j = 0; j < 12; j++)
+				printf("%.2x", payload->storage.data[i][j]);
+			printf("\n");
 		}
 	}
-	printf("  payload: ");
-	for (i = 0; i < sizeof(payload->data); i++)
-		printf("%.2x", payload->data[i]);
-	printf("\n");
 }
 
 void srf_ip_conn_packet_print_data_c4fm_payload(srf_ip_conn_data_c4fm_payload_t *payload) {
