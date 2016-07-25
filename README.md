@@ -1,8 +1,14 @@
 # SharkRF IP Connector Protocol
 
-This is the protocol used by [SharkRF openSPOT](https://www.sharkrf.com/products/openspot/)'s UDP API to allow 3rd party developers to create their own applications which communicate using openSPOT. The protocol is designed for simplicity.
+This is the protocol used by [SharkRF openSPOT](https://www.sharkrf.com/products/openspot/)'s UDP API to allow 3rd party developers to create their own applications which communicate using openSPOT.
 
-You can find a demo client and server application in this repo.
+The protocol is designed for simplicity: strings are closed with zeroes, and packets have redundant fields. For example: call info can be extracted from raw DMR frames, but the protocol includes them in the packets separately, so 3rd party developers don't need to deal with call tracking.
+
+You can find a demo client and server application in this repo. The server is a very simple implementation, it can only handle one client at a time. However, handling multiple clients could be added easily.
+
+Note that openSPOT doesn't use call information sent to it in the packets. It always extracts all required info from raw data streams.
+
+Pull requests are welcome!
 
 ## Protocol Description
 
