@@ -191,7 +191,7 @@ static flag_t packet_process_raw(void) {
 		printf("  client isn't logged in, ignoring packet\n");
 		return 0;
 	}
-	if (!srf_ip_conn_packet_hmac_check(server_client.token, CONFIG_PASSWORD, packet, sizeof(srf_ip_conn_config_payload_t))) {
+	if (!srf_ip_conn_packet_hmac_check(server_client.token, CONFIG_PASSWORD, packet, sizeof(srf_ip_conn_data_raw_payload_t))) {
 		printf("  invalid hmac, ignoring packet\n");
 		return 0;
 	}
