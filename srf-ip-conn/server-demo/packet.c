@@ -45,7 +45,7 @@ static void packet_process_login(void) {
 	uint8_t i;
 
 	if (server_sock_received_packet.received_bytes != sizeof(srf_ip_conn_packet_header_t)+sizeof(srf_ip_conn_login_payload_t)) {
-		printf("  packet is %u bytes, not %lu, ignoring\n", server_sock_received_packet.received_bytes, sizeof(srf_ip_conn_packet_header_t)+sizeof(srf_ip_conn_login_payload_t));
+		printf("  packet is %zd bytes, not %lu, ignoring\n", server_sock_received_packet.received_bytes, sizeof(srf_ip_conn_packet_header_t)+sizeof(srf_ip_conn_login_payload_t));
 		return;
 	}
 
@@ -73,7 +73,7 @@ static void packet_process_auth(void) {
 	}
 
 	if (server_sock_received_packet.received_bytes != sizeof(srf_ip_conn_packet_header_t)+sizeof(srf_ip_conn_auth_payload_t)) {
-		printf("  packet is %u bytes, not %lu, ignoring\n", server_sock_received_packet.received_bytes, sizeof(srf_ip_conn_packet_header_t)+sizeof(srf_ip_conn_auth_payload_t));
+		printf("  packet is %zd bytes, not %lu, ignoring\n", server_sock_received_packet.received_bytes, sizeof(srf_ip_conn_packet_header_t)+sizeof(srf_ip_conn_auth_payload_t));
 		return;
 	}
 
@@ -125,7 +125,7 @@ static flag_t packet_process_config(void) {
 	uint8_t i;
 
 	if (server_sock_received_packet.received_bytes != sizeof(srf_ip_conn_packet_header_t)+sizeof(srf_ip_conn_config_payload_t)) {
-		printf("  packet is %u bytes, not %lu, ignoring\n", server_sock_received_packet.received_bytes, sizeof(srf_ip_conn_packet_header_t)+sizeof(srf_ip_conn_config_payload_t));
+		printf("  packet is %zd bytes, not %lu, ignoring\n", server_sock_received_packet.received_bytes, sizeof(srf_ip_conn_packet_header_t)+sizeof(srf_ip_conn_config_payload_t));
 		return 0;
 	}
 	if (!server_client_is_logged_in(&server_sock_received_packet.from_addr)) {
@@ -155,7 +155,7 @@ static flag_t packet_process_ping(void) {
 	uint8_t i;
 
 	if (server_sock_received_packet.received_bytes != sizeof(srf_ip_conn_packet_header_t)+sizeof(srf_ip_conn_ping_payload_t)) {
-		printf("  packet is %u bytes, not %lu, ignoring\n", server_sock_received_packet.received_bytes, sizeof(srf_ip_conn_packet_header_t)+sizeof(srf_ip_conn_ping_payload_t));
+		printf("  packet is %zd bytes, not %lu, ignoring\n", server_sock_received_packet.received_bytes, sizeof(srf_ip_conn_packet_header_t)+sizeof(srf_ip_conn_ping_payload_t));
 		return 0;
 	}
 	if (!server_client_is_logged_in(&server_sock_received_packet.from_addr)) {
@@ -182,7 +182,7 @@ static void packet_process_close(void) {
 	uint8_t i;
 
 	if (server_sock_received_packet.received_bytes != sizeof(srf_ip_conn_packet_header_t)+sizeof(srf_ip_conn_close_payload_t)) {
-		printf("  packet is %u bytes, not %lu, ignoring\n", server_sock_received_packet.received_bytes, sizeof(srf_ip_conn_packet_header_t)+sizeof(srf_ip_conn_close_payload_t));
+		printf("  packet is %zd bytes, not %lu, ignoring\n", server_sock_received_packet.received_bytes, sizeof(srf_ip_conn_packet_header_t)+sizeof(srf_ip_conn_close_payload_t));
 		return;
 	}
 	if (!server_client_is_logged_in(&server_sock_received_packet.from_addr)) {
@@ -209,7 +209,7 @@ static flag_t packet_process_raw(void) {
 	srf_ip_conn_packet_t *packet = (srf_ip_conn_packet_t *)server_sock_received_packet.buf;
 
 	if (server_sock_received_packet.received_bytes != sizeof(srf_ip_conn_packet_header_t)+sizeof(srf_ip_conn_data_raw_payload_t)) {
-		printf("  packet is %u bytes, not %lu, ignoring\n", server_sock_received_packet.received_bytes, sizeof(srf_ip_conn_packet_header_t)+sizeof(srf_ip_conn_data_raw_payload_t));
+		printf("  packet is %zd bytes, not %lu, ignoring\n", server_sock_received_packet.received_bytes, sizeof(srf_ip_conn_packet_header_t)+sizeof(srf_ip_conn_data_raw_payload_t));
 		return 0;
 	}
 	if (!server_client_is_logged_in(&server_sock_received_packet.from_addr)) {
@@ -231,7 +231,7 @@ static flag_t packet_process_dmr(void) {
 	srf_ip_conn_packet_t *packet = (srf_ip_conn_packet_t *)server_sock_received_packet.buf;
 
 	if (server_sock_received_packet.received_bytes != sizeof(srf_ip_conn_packet_header_t)+sizeof(srf_ip_conn_data_dmr_payload_t)) {
-		printf("  packet is %u bytes, not %lu, ignoring\n", server_sock_received_packet.received_bytes, sizeof(srf_ip_conn_packet_header_t)+sizeof(srf_ip_conn_data_dmr_payload_t));
+		printf("  packet is %zd bytes, not %lu, ignoring\n", server_sock_received_packet.received_bytes, sizeof(srf_ip_conn_packet_header_t)+sizeof(srf_ip_conn_data_dmr_payload_t));
 		return 0;
 	}
 	if (!server_client_is_logged_in(&server_sock_received_packet.from_addr)) {
@@ -253,7 +253,7 @@ static flag_t packet_process_dstar(void) {
 	srf_ip_conn_packet_t *packet = (srf_ip_conn_packet_t *)server_sock_received_packet.buf;
 
 	if (server_sock_received_packet.received_bytes != sizeof(srf_ip_conn_packet_header_t)+sizeof(srf_ip_conn_data_dstar_payload_t)) {
-		printf("  packet is %u bytes, not %lu, ignoring\n", server_sock_received_packet.received_bytes, sizeof(srf_ip_conn_packet_header_t)+sizeof(srf_ip_conn_data_dstar_payload_t));
+		printf("  packet is %zd bytes, not %lu, ignoring\n", server_sock_received_packet.received_bytes, sizeof(srf_ip_conn_packet_header_t)+sizeof(srf_ip_conn_data_dstar_payload_t));
 		return 0;
 	}
 	if (!server_client_is_logged_in(&server_sock_received_packet.from_addr)) {
@@ -275,7 +275,7 @@ static flag_t packet_process_c4fm(void) {
 	srf_ip_conn_packet_t *packet = (srf_ip_conn_packet_t *)server_sock_received_packet.buf;
 
 	if (server_sock_received_packet.received_bytes != sizeof(srf_ip_conn_packet_header_t)+sizeof(srf_ip_conn_data_c4fm_payload_t)) {
-		printf("  packet is %u bytes, not %lu, ignoring\n", server_sock_received_packet.received_bytes, sizeof(srf_ip_conn_packet_header_t)+sizeof(srf_ip_conn_data_c4fm_payload_t));
+		printf("  packet is %zd bytes, not %lu, ignoring\n", server_sock_received_packet.received_bytes, sizeof(srf_ip_conn_packet_header_t)+sizeof(srf_ip_conn_data_c4fm_payload_t));
 		return 0;
 	}
 	if (!server_client_is_logged_in(&server_sock_received_packet.from_addr)) {

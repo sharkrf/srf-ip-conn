@@ -72,7 +72,7 @@ int client_sock_receive(void) {
 			if ((client_sock_received_packet.received_bytes = recvfrom(client_sock_fd, client_sock_received_packet.buf, sizeof(client_sock_received_packet.buf), 0, (struct sockaddr *)&from_addr, &addr_len)) == -1)
 				return -1;
 
-			printf("client-sock: got %u byte packet from %s:%u\n", client_sock_received_packet.received_bytes,
+			printf("client-sock: got %zd byte packet from %s:%u\n", client_sock_received_packet.received_bytes,
 					inet_ntop(from_addr.sa_family, sock_get_in_addr(&from_addr), s, sizeof(s)),
 					sock_get_port(&from_addr));
 			return client_sock_received_packet.received_bytes;

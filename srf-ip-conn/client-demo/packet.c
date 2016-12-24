@@ -34,7 +34,7 @@ static void packet_process_token(void) {
 	srf_ip_conn_packet_t *packet = (srf_ip_conn_packet_t *)client_sock_received_packet.buf;
 
 	if (client_sock_received_packet.received_bytes != sizeof(srf_ip_conn_packet_header_t)+sizeof(srf_ip_conn_token_payload_t)) {
-		printf("  packet is %u bytes, not %lu, ignoring\n", client_sock_received_packet.received_bytes, sizeof(srf_ip_conn_packet_header_t)+sizeof(srf_ip_conn_token_payload_t));
+		printf("  packet is %zd bytes, not %lu, ignoring\n", client_sock_received_packet.received_bytes, sizeof(srf_ip_conn_packet_header_t)+sizeof(srf_ip_conn_token_payload_t));
 		return;
 	}
 
@@ -45,7 +45,7 @@ static void packet_process_ack(void) {
 	srf_ip_conn_packet_t *packet = (srf_ip_conn_packet_t *)client_sock_received_packet.buf;
 
 	if (client_sock_received_packet.received_bytes != sizeof(srf_ip_conn_packet_header_t)+sizeof(srf_ip_conn_ack_payload_t)) {
-		printf("  packet is %u bytes, not %lu, ignoring\n", client_sock_received_packet.received_bytes, sizeof(srf_ip_conn_packet_header_t)+sizeof(srf_ip_conn_ack_payload_t));
+		printf("  packet is %zd bytes, not %lu, ignoring\n", client_sock_received_packet.received_bytes, sizeof(srf_ip_conn_packet_header_t)+sizeof(srf_ip_conn_ack_payload_t));
 		return;
 	}
 	if (!srf_ip_conn_packet_hmac_check(client_token, CONFIG_PASSWORD, packet, sizeof(srf_ip_conn_ack_payload_t))) {
@@ -60,7 +60,7 @@ static void packet_process_nak(void) {
 	srf_ip_conn_packet_t *packet = (srf_ip_conn_packet_t *)client_sock_received_packet.buf;
 
 	if (client_sock_received_packet.received_bytes != sizeof(srf_ip_conn_packet_header_t)+sizeof(srf_ip_conn_nak_payload_t)) {
-		printf("  packet is %u bytes, not %lu, ignoring\n", client_sock_received_packet.received_bytes, sizeof(srf_ip_conn_packet_header_t)+sizeof(srf_ip_conn_nak_payload_t));
+		printf("  packet is %zd bytes, not %lu, ignoring\n", client_sock_received_packet.received_bytes, sizeof(srf_ip_conn_packet_header_t)+sizeof(srf_ip_conn_nak_payload_t));
 		return;
 	}
 	if (!srf_ip_conn_packet_hmac_check(client_token, CONFIG_PASSWORD, packet, sizeof(srf_ip_conn_nak_payload_t))) {
@@ -75,7 +75,7 @@ static void packet_process_pong(void) {
 	srf_ip_conn_packet_t *packet = (srf_ip_conn_packet_t *)client_sock_received_packet.buf;
 
 	if (client_sock_received_packet.received_bytes != sizeof(srf_ip_conn_packet_header_t)+sizeof(srf_ip_conn_pong_payload_t)) {
-		printf("  packet is %u bytes, not %lu, ignoring\n", client_sock_received_packet.received_bytes, sizeof(srf_ip_conn_packet_header_t)+sizeof(srf_ip_conn_pong_payload_t));
+		printf("  packet is %zd bytes, not %lu, ignoring\n", client_sock_received_packet.received_bytes, sizeof(srf_ip_conn_packet_header_t)+sizeof(srf_ip_conn_pong_payload_t));
 		return;
 	}
 	if (!srf_ip_conn_packet_hmac_check(client_token, CONFIG_PASSWORD, packet, sizeof(srf_ip_conn_pong_payload_t))) {
@@ -90,7 +90,7 @@ static void packet_process_raw(void) {
 	srf_ip_conn_packet_t *packet = (srf_ip_conn_packet_t *)client_sock_received_packet.buf;
 
 	if (client_sock_received_packet.received_bytes != sizeof(srf_ip_conn_packet_header_t)+sizeof(srf_ip_conn_data_raw_payload_t)) {
-		printf("  packet is %u bytes, not %lu, ignoring\n", client_sock_received_packet.received_bytes, sizeof(srf_ip_conn_packet_header_t)+sizeof(srf_ip_conn_data_raw_payload_t));
+		printf("  packet is %zd bytes, not %lu, ignoring\n", client_sock_received_packet.received_bytes, sizeof(srf_ip_conn_packet_header_t)+sizeof(srf_ip_conn_data_raw_payload_t));
 		return;
 	}
 	if (!srf_ip_conn_packet_hmac_check(client_token, CONFIG_PASSWORD, packet, sizeof(srf_ip_conn_data_raw_payload_t))) {
@@ -106,7 +106,7 @@ static void packet_process_dmr(void) {
 	srf_ip_conn_packet_t *packet = (srf_ip_conn_packet_t *)client_sock_received_packet.buf;
 
 	if (client_sock_received_packet.received_bytes != sizeof(srf_ip_conn_packet_header_t)+sizeof(srf_ip_conn_data_dmr_payload_t)) {
-		printf("  packet is %u bytes, not %lu, ignoring\n", client_sock_received_packet.received_bytes, sizeof(srf_ip_conn_packet_header_t)+sizeof(srf_ip_conn_data_dmr_payload_t));
+		printf("  packet is %zd bytes, not %lu, ignoring\n", client_sock_received_packet.received_bytes, sizeof(srf_ip_conn_packet_header_t)+sizeof(srf_ip_conn_data_dmr_payload_t));
 		return;
 	}
 	if (!srf_ip_conn_packet_hmac_check(client_token, CONFIG_PASSWORD, packet, sizeof(srf_ip_conn_data_dmr_payload_t))) {
@@ -122,7 +122,7 @@ static void packet_process_dstar(void) {
 	srf_ip_conn_packet_t *packet = (srf_ip_conn_packet_t *)client_sock_received_packet.buf;
 
 	if (client_sock_received_packet.received_bytes != sizeof(srf_ip_conn_packet_header_t)+sizeof(srf_ip_conn_data_dstar_payload_t)) {
-		printf("  packet is %u bytes, not %lu, ignoring\n", client_sock_received_packet.received_bytes, sizeof(srf_ip_conn_packet_header_t)+sizeof(srf_ip_conn_data_dstar_payload_t));
+		printf("  packet is %zd bytes, not %lu, ignoring\n", client_sock_received_packet.received_bytes, sizeof(srf_ip_conn_packet_header_t)+sizeof(srf_ip_conn_data_dstar_payload_t));
 		return;
 	}
 	if (!srf_ip_conn_packet_hmac_check(client_token, CONFIG_PASSWORD, packet, sizeof(srf_ip_conn_data_dstar_payload_t))) {
@@ -138,7 +138,7 @@ static void packet_process_c4fm(void) {
 	srf_ip_conn_packet_t *packet = (srf_ip_conn_packet_t *)client_sock_received_packet.buf;
 
 	if (client_sock_received_packet.received_bytes != sizeof(srf_ip_conn_packet_header_t)+sizeof(srf_ip_conn_data_c4fm_payload_t)) {
-		printf("  packet is %u bytes, not %lu, ignoring\n", client_sock_received_packet.received_bytes, sizeof(srf_ip_conn_packet_header_t)+sizeof(srf_ip_conn_data_c4fm_payload_t));
+		printf("  packet is %zd bytes, not %lu, ignoring\n", client_sock_received_packet.received_bytes, sizeof(srf_ip_conn_packet_header_t)+sizeof(srf_ip_conn_data_c4fm_payload_t));
 		return;
 	}
 	if (!srf_ip_conn_packet_hmac_check(client_token, CONFIG_PASSWORD, packet, sizeof(srf_ip_conn_data_c4fm_payload_t))) {

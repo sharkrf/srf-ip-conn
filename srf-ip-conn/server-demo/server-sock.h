@@ -32,7 +32,7 @@ DEALINGS IN THE SOFTWARE.
 
 typedef struct {
 	uint8_t buf[sizeof(srf_ip_conn_packet_t)];
-	uint16_t received_bytes;
+	ssize_t received_bytes;
 	struct sockaddr from_addr;
 } server_sock_received_packet_t;
 
