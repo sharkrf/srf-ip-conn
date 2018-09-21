@@ -293,6 +293,28 @@ static flag_t packet_process_c4fm(void) {
 	return 1;
 }
 
+static flag_t packet_process_nxdn(void) {
+	srf_ip_conn_packet_t *packet = (srf_ip_conn_packet_t *)server_sock_received_packet.buf;
+
+	if (server_sock_received_packet.received_bytes != sizeof(srf_ip_conn_packet_header_t)+sizeof(srf_ip_conn_data_nxdn_payload_t)) {
+		printf("  packet is %zd bytes, not %lu, ignoring\n", server_sock_received_packet.received_bytes, sizeof(srf_ip_conn_packet_header_t)+sizeof(srf_ip_conn_data_nxdn_payload_t));
+		return 0;
+	}
+	if (!server_client_is_logged_in(&server_sock_received_packet.from_addr)) {
+		printf("  client isn't logged in, ignoring packet\n");
+		return 0;
+	}
+	if (!srf_ip_conn_packet_hmac_check(server_client.token, CONFIG_PASSWORD, packet, sizeof(srf_ip_conn_data_nxdn_payload_t))) {
+		printf("  invalid hmac, ignoring packet\n");
+		return 0;
+	}
+
+	printf("  got valid nxdn data\n");
+	srf_ip_conn_packet_print_data_nxdn_payload(&packet->data_nxdn);
+
+	return 1;
+}
+
 void packet_process(void) {
 	srf_ip_conn_packet_header_t *header = (srf_ip_conn_packet_header_t *)server_sock_received_packet.buf;
 
@@ -330,6 +352,10 @@ void packet_process(void) {
 					break;
 				case SRF_IP_CONN_PACKET_TYPE_DATA_C4FM:
 					if (packet_process_c4fm())
+						server_client_got_valid_packet();
+					break;
+				case SRF_IP_CONN_PACKET_TYPE_DATA_NXDN:
+					if (packet_process_nxdn())
 						server_client_got_valid_packet();
 					break;
 			}

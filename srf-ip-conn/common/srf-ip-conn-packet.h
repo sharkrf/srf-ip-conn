@@ -47,6 +47,7 @@ DEALINGS IN THE SOFTWARE.
 #define SRF_IP_CONN_PACKET_TYPE_DATA_DMR                        0x0a // Payload: srf_ip_conn_data_dmr_payload_t
 #define SRF_IP_CONN_PACKET_TYPE_DATA_DSTAR                      0x0b // Payload: srf_ip_conn_data_dstar_payload_t
 #define SRF_IP_CONN_PACKET_TYPE_DATA_C4FM                       0x0c // Payload: srf_ip_conn_data_c4fm_payload_t
+#define SRF_IP_CONN_PACKET_TYPE_DATA_NXDN                       0x0d // Payload: srf_ip_conn_data_nxdn_payload_t
 typedef uint8_t srf_ip_conn_packet_type_t;
 
 typedef struct __attribute__((packed)) {
@@ -247,6 +248,30 @@ typedef struct __attribute__((packed)) {
     uint8_t hmac[32];                                           // Hashed Message Auth Code, sha256 ( token + secret password + all fields of this struct except hmac )
 } srf_ip_conn_data_c4fm_payload_t;                              // 185 bytes total
 
+// NXDN
+
+#define SRF_IP_CONN_DATA_NXDN_PACKET_TYPE_HEADER                0x00
+#define SRF_IP_CONN_DATA_NXDN_PACKET_TYPE_VOICE_IN_PART1        0x01
+#define SRF_IP_CONN_DATA_NXDN_PACKET_TYPE_VOICE_IN_PART2        0x02
+#define SRF_IP_CONN_DATA_NXDN_PACKET_TYPE_VOICE_IN_BOTH_PARTS   0x03
+#define SRF_IP_CONN_DATA_NXDN_PACKET_TYPE_DATA                  0x04
+#define SRF_IP_CONN_DATA_NXDN_PACKET_TYPE_TERMINATOR            0x05
+typedef uint8_t srf_ip_conn_data_nxdn_packet_type_t;
+
+typedef struct __attribute__((packed)) {
+    uint32_t seq_no;                                            // Sequence number (starts from 0 and incremented for every data packet for the whole connection)
+    uint32_t call_session_id;                                   // Random 32-bit value for the call.
+    uint16_t dst_id;                                            // Destination NXDN ID
+    uint16_t src_id;                                            // Source NXDN ID
+    uint8_t call_type                           : 1;            // Private = 0; Group = 1
+    uint8_t ran                                 : 6;
+    uint8_t reserved                            : 1;
+    int8_t rssi_dbm;                                            // Received signal strength
+    srf_ip_conn_data_nxdn_packet_type_t packet_type;
+    uint8_t data[48];                                           // Raw NXDN packet data
+    uint8_t hmac[32];                                           // Hashed Message Auth Code, sha256 ( token + secret password + all fields of this struct except hmac )
+} srf_ip_conn_data_nxdn_payload_t;                              // 95 bytes total
+
 // GENERIC
 
 typedef struct __attribute__((packed)) {
@@ -265,6 +290,7 @@ typedef struct __attribute__((packed)) {
         srf_ip_conn_data_dmr_payload_t data_dmr;
         srf_ip_conn_data_dstar_payload_t data_dstar;
         srf_ip_conn_data_c4fm_payload_t data_c4fm;
+        srf_ip_conn_data_nxdn_payload_t data_nxdn;
     };
 } srf_ip_conn_packet_t;
 
@@ -278,5 +304,6 @@ void srf_ip_conn_packet_print_data_raw_payload(srf_ip_conn_data_raw_payload_t *p
 void srf_ip_conn_packet_print_data_dmr_payload(srf_ip_conn_data_dmr_payload_t *payload);
 void srf_ip_conn_packet_print_data_dstar_payload(srf_ip_conn_data_dstar_payload_t *payload);
 void srf_ip_conn_packet_print_data_c4fm_payload(srf_ip_conn_data_c4fm_payload_t *payload);
+void srf_ip_conn_packet_print_data_nxdn_payload(srf_ip_conn_data_nxdn_payload_t *payload);
 
 #endif

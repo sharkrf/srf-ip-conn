@@ -150,6 +150,22 @@ static void packet_process_c4fm(void) {
 	client_got_valid_packet();
 }
 
+static void packet_process_nxdn(void) {
+	srf_ip_conn_packet_t *packet = (srf_ip_conn_packet_t *)client_sock_received_packet.buf;
+
+	if (client_sock_received_packet.received_bytes != sizeof(srf_ip_conn_packet_header_t)+sizeof(srf_ip_conn_data_nxdn_payload_t)) {
+		printf("  packet is %zd bytes, not %lu, ignoring\n", client_sock_received_packet.received_bytes, sizeof(srf_ip_conn_packet_header_t)+sizeof(srf_ip_conn_data_nxdn_payload_t));
+		return;
+	}
+	if (!srf_ip_conn_packet_hmac_check(client_token, CONFIG_PASSWORD, packet, sizeof(srf_ip_conn_data_nxdn_payload_t))) {
+		printf("  invalid hmac, ignoring packet\n");
+		return;
+	}
+
+	srf_ip_conn_packet_print_data_nxdn_payload(&packet->data_nxdn);
+	client_got_valid_packet();
+}
+
 flag_t packet_is_header_valid(void) {
 	return (client_sock_received_packet.received_bytes >= sizeof(srf_ip_conn_packet_header_t) &&
 			memcmp(client_sock_received_packet.buf, SRF_IP_CONN_MAGIC_STR, SRF_IP_CONN_MAGIC_STR_LENGTH) == 0);
@@ -184,6 +200,9 @@ void packet_process(void) {
 					break;
 				case SRF_IP_CONN_PACKET_TYPE_DATA_C4FM:
 					packet_process_c4fm();
+					break;
+				case SRF_IP_CONN_PACKET_TYPE_DATA_NXDN:
+					packet_process_nxdn();
 					break;
 			}
 			break;
