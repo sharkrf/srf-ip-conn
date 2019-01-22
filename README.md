@@ -25,7 +25,7 @@ Note right of Server: If authorized,\nthe server replies with ACK,\notherwise NA
 Server->Client: ACK
 Note over Client: Client is now logged in.
 -->
-![Login Process Diagram](https://cdn.rawgit.com/sharkrf/srf-ip-conn/master/img/login.svg)
+![Login Process Diagram](https://raw.githubusercontent.com/sharkrf/srf-ip-conn/master/img/login.svg)
 
 Max. password length is 32 characters. Server limits auth tries for only one in every 5 seconds. Packets with invalid HMAC are ignored.
 
@@ -37,7 +37,7 @@ Client can optionally update it's config information.
 Client->Server: Config
 Server->Client: ACK
 -->
-![Config Process Diagram](https://cdn.rawgit.com/sharkrf/srf-ip-conn/master/img/config.svg)
+![Config Process Diagram](https://raw.githubusercontent.com/sharkrf/srf-ip-conn/master/img/config.svg)
 
 ### Ping
 
@@ -47,7 +47,7 @@ Client should ping the server periodically at least once every 30 seconds (5 sec
 Client->Server: Ping
 Server->Client: Pong
 -->
-![Ping Process Diagram](https://cdn.rawgit.com/sharkrf/srf-ip-conn/master/img/ping.svg)
+![Ping Process Diagram](https://raw.githubusercontent.com/sharkrf/srf-ip-conn/master/img/ping.svg)
 
 ### Data
 
@@ -60,7 +60,7 @@ Server->Client: Data
 Client->Server: Data
 Server->Client: Data
 -->
-![Data Diagram](https://cdn.rawgit.com/sharkrf/srf-ip-conn/master/img/data.svg)
+![Data Diagram](https://raw.githubusercontent.com/sharkrf/srf-ip-conn/master/img/data.svg)
 
 ### Closing the connection
 
@@ -70,11 +70,11 @@ Both participants can close the connection gracefully.
 Client->Server: Close
 Server->Client: ACK
 -->
-![Close Process Diagram 1](https://cdn.rawgit.com/sharkrf/srf-ip-conn/master/img/close-client.svg)
+![Close Process Diagram 1](https://raw.githubusercontent.com/sharkrf/srf-ip-conn/master/img/close-client.svg)
 <!--
 Server->Client: Close
 -->
-![Close Process Diagram 2](https://cdn.rawgit.com/sharkrf/srf-ip-conn/master/img/close-server.svg)
+![Close Process Diagram 2](https://raw.githubusercontent.com/sharkrf/srf-ip-conn/master/img/close-server.svg)
 
 ## Packet Structure
 
