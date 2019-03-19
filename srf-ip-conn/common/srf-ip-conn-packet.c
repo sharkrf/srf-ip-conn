@@ -183,7 +183,7 @@ void srf_ip_conn_packet_print_data_nxdn_payload(srf_ip_conn_data_nxdn_payload_t 
 	printf("  dst id: %u\n", payload->dst_id);
 	printf("  src id: %u\n", payload->src_id);
 	printf("  call type: %s\n", payload->call_type ? "group" : "private");
-	printf("  pakcet type: %u ", payload->packet_type);
+	printf("  packet type: %u ", payload->packet_type);
 	switch (payload->packet_type) {
 		case SRF_IP_CONN_DATA_NXDN_PACKET_TYPE_HEADER: printf("header\n"); break;
 		case SRF_IP_CONN_DATA_NXDN_PACKET_TYPE_VOICE_IN_PART1: printf("voice in part1\n"); break;
@@ -194,6 +194,31 @@ void srf_ip_conn_packet_print_data_nxdn_payload(srf_ip_conn_data_nxdn_payload_t 
 		default: printf("unknown\n"); break;
 	}
 	printf("  ran: %u\n", payload->ran);
+	printf("  rssi: %d dbm\n", payload->rssi_dbm);
+	printf("  payload: ");
+	for (i = 0; i < sizeof(payload->data); i++)
+		printf("%.2x", payload->data[i]);
+	printf("\n");
+}
+
+void srf_ip_conn_packet_print_data_p25_payload(srf_ip_conn_data_p25_payload_t *payload) {
+	uint8_t i;
+
+	printf("  seq. no: %u\n", ntohl(payload->seq_no));
+	printf("  call session id: 0x%.8x\n", ntohl(payload->call_session_id));
+	printf("  dst id: %u\n", (payload->dst_id[0] << 16) | (payload->dst_id[1] << 8) | (payload->dst_id[2]));
+	printf("  src id: %u\n", (payload->src_id[0] << 16) | (payload->src_id[1] << 8) | (payload->src_id[2]));
+	printf("  call type: %s\n", payload->call_type ? "group" : "private");
+	printf("  packet type: %u ", payload->packet_type);
+	switch (payload->packet_type) {
+		case SRF_IP_CONN_DATA_P25_PACKET_TYPE_HEADER: printf("header\n"); break;
+		case SRF_IP_CONN_DATA_P25_PACKET_TYPE_LDU1: printf("ldu1\n"); break;
+		case SRF_IP_CONN_DATA_P25_PACKET_TYPE_LDU2: printf("ldu2\n"); break;
+		case SRF_IP_CONN_DATA_P25_PACKET_TYPE_DATA: printf("data\n"); break;
+		case SRF_IP_CONN_DATA_P25_PACKET_TYPE_TERMINATOR: printf("terminator\n"); break;
+		default: printf("unknown\n"); break;
+	}
+	printf("  nac: %u\n", payload->nac);
 	printf("  rssi: %d dbm\n", payload->rssi_dbm);
 	printf("  payload: ");
 	for (i = 0; i < sizeof(payload->data); i++)

@@ -48,6 +48,7 @@ DEALINGS IN THE SOFTWARE.
 #define SRF_IP_CONN_PACKET_TYPE_DATA_DSTAR                      0x0b // Payload: srf_ip_conn_data_dstar_payload_t
 #define SRF_IP_CONN_PACKET_TYPE_DATA_C4FM                       0x0c // Payload: srf_ip_conn_data_c4fm_payload_t
 #define SRF_IP_CONN_PACKET_TYPE_DATA_NXDN                       0x0d // Payload: srf_ip_conn_data_nxdn_payload_t
+#define SRF_IP_CONN_PACKET_TYPE_DATA_P25                        0x0e // Payload: srf_ip_conn_data_p25_payload_t
 typedef uint8_t srf_ip_conn_packet_type_t;
 
 typedef struct __attribute__((packed)) {
@@ -272,6 +273,29 @@ typedef struct __attribute__((packed)) {
     uint8_t hmac[32];                                           // Hashed Message Auth Code, sha256 ( token + secret password + all fields of this struct except hmac )
 } srf_ip_conn_data_nxdn_payload_t;                              // 95 bytes total
 
+// P25
+
+#define SRF_IP_CONN_DATA_P25_PACKET_TYPE_HEADER                0x00
+#define SRF_IP_CONN_DATA_P25_PACKET_TYPE_LDU1                  0x01
+#define SRF_IP_CONN_DATA_P25_PACKET_TYPE_LDU2                  0x02
+#define SRF_IP_CONN_DATA_P25_PACKET_TYPE_DATA                  0x03
+#define SRF_IP_CONN_DATA_P25_PACKET_TYPE_TERMINATOR            0x04
+typedef uint8_t srf_ip_conn_data_p25_packet_type_t;
+
+typedef struct __attribute__((packed)) {
+    uint32_t seq_no;                                            // Sequence number (starts from 0 and incremented for every data packet for the whole connection)
+    uint32_t call_session_id;                                   // Random 32-bit value for the call.
+    uint8_t dst_id[3];                                          // Destination P25 ID
+    uint8_t src_id[3];                                          // Source P25 ID
+    uint16_t call_type                           : 1;           // Private = 0; Group = 1
+    uint16_t nac                                 : 12;
+    uint16_t reserved                            : 3;
+    int8_t rssi_dbm;                                            // Received signal strength
+    srf_ip_conn_data_p25_packet_type_t packet_type;
+    uint8_t data[216];                                          // Raw P25 packet data
+    uint8_t hmac[32];                                           // Hashed Message Auth Code, sha256 ( token + secret password + all fields of this struct except hmac )
+} srf_ip_conn_data_p25_payload_t;                               // 266 bytes total
+
 // GENERIC
 
 typedef struct __attribute__((packed)) {
@@ -291,6 +315,7 @@ typedef struct __attribute__((packed)) {
         srf_ip_conn_data_dstar_payload_t data_dstar;
         srf_ip_conn_data_c4fm_payload_t data_c4fm;
         srf_ip_conn_data_nxdn_payload_t data_nxdn;
+        srf_ip_conn_data_p25_payload_t data_p25;
     };
 } srf_ip_conn_packet_t;
 
@@ -305,5 +330,6 @@ void srf_ip_conn_packet_print_data_dmr_payload(srf_ip_conn_data_dmr_payload_t *p
 void srf_ip_conn_packet_print_data_dstar_payload(srf_ip_conn_data_dstar_payload_t *payload);
 void srf_ip_conn_packet_print_data_c4fm_payload(srf_ip_conn_data_c4fm_payload_t *payload);
 void srf_ip_conn_packet_print_data_nxdn_payload(srf_ip_conn_data_nxdn_payload_t *payload);
+void srf_ip_conn_packet_print_data_p25_payload(srf_ip_conn_data_p25_payload_t *payload);
 
 #endif
