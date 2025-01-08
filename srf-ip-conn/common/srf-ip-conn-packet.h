@@ -85,6 +85,7 @@ typedef struct __attribute__((packed)) {
 
 #define SRF_IP_CONN_NAK_RESULT_AUTH_INVALID_CLIENT_ID           0
 #define SRF_IP_CONN_NAK_RESULT_AUTH_INVALID_HMAC                1
+#define SRF_IP_CONN_NAK_RESULT_AUTH_SERVER_FULL                 2
 typedef uint8_t srf_ip_conn_nak_result_t;
 
 typedef struct __attribute__((packed)) {

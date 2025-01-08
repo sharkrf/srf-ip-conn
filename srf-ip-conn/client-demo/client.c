@@ -192,8 +192,15 @@ void client_got_nak(srf_ip_conn_nak_result_t nak_result) {
 					sleep(5);
 					client_state_change(CLIENT_STATE_INIT);
 					break;
+				case SRF_IP_CONN_NAK_RESULT_AUTH_SERVER_FULL:
+					printf("  got nak with server full for login, retrying in 5 seconds\n");
+					sleep(5);
+					client_state_change(CLIENT_STATE_INIT);
+					break;
 				default:
-					printf("  ignoring nak, invalid result\n");
+					printf("  unknown nak, retrying in 5 seconds\n");
+					sleep(5);
+					client_state_change(CLIENT_STATE_INIT);
 					break;
 			}
 			break;
