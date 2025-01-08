@@ -44,7 +44,7 @@ void client_got_valid_packet(void) {
 
 static void client_state_change(client_state_t new_state) {
 	if (client_state != new_state) {
-		printf("client: changing state to ");
+		printf("client [%u]: changing state to ", client_id);
 		switch (new_state) {
 			case CLIENT_STATE_INIT: printf("init\n"); break;
 			case CLIENT_STATE_LOGIN_SENT: printf("login sent\n"); break;
@@ -61,7 +61,7 @@ static void client_state_change(client_state_t new_state) {
 static void client_send_login(void) {
 	srf_ip_conn_packet_t packet;
 
-	printf("client: sending login\n");
+	printf("client [%u]: sending login\n", client_id);
 
 	srf_ip_conn_packet_init(&packet.header, SRF_IP_CONN_PACKET_TYPE_LOGIN);
 	packet.login.client_id = htonl(client_id);
@@ -75,7 +75,7 @@ static void client_send_auth(void) {
 	srf_ip_conn_packet_t packet;
 	uint8_t i;
 
-	printf("  sending auth\n");
+	printf("client [%u]: sending auth\n", client_id);
 
 	srf_ip_conn_packet_init(&packet.header, SRF_IP_CONN_PACKET_TYPE_AUTH);
 	for (i = 0; i < sizeof(packet.auth.random_data); i++)
@@ -91,11 +91,11 @@ void client_got_token(uint8_t token[SRF_IP_CONN_TOKEN_LENGTH]) {
 	uint8_t i;
 
 	if (client_state != CLIENT_STATE_LOGIN_SENT) {
-		printf("  client is not in login sent state, ignoring token packet\n");
+		printf("client [%u]: not in login sent state, ignoring token packet\n", client_id);
 		return;
 	}
 
-	printf("  got token from server: ");
+	printf("client [%u]: got token from server: ", client_id);
 	for (i = 0; i < SRF_IP_CONN_TOKEN_LENGTH; i++) {
 		client_token[i] = token[i];
 		printf("%.2x", token[i]);
@@ -109,7 +109,7 @@ void client_got_token(uint8_t token[SRF_IP_CONN_TOKEN_LENGTH]) {
 static void client_send_config(void) {
 	srf_ip_conn_packet_t packet;
 
-	printf("client: sending config\n");
+	printf("client [%u]: sending config\n", client_id);
 
 	srf_ip_conn_packet_init(&packet.header, SRF_IP_CONN_PACKET_TYPE_CONFIG);
 
@@ -138,42 +138,42 @@ void client_got_ack(srf_ip_conn_ack_result_t ack_result) {
 		case CLIENT_STATE_AUTH_SENT:
 			switch (ack_result) {
 				case SRF_IP_CONN_ACK_RESULT_AUTH:
-					printf("  got ack for auth\n");
+					printf("client [%u]: got ack for auth\n", client_id);
 					client_send_config();
 					client_state_change(CLIENT_STATE_CONFIG_SENT);
 					client_got_valid_packet();
 					break;
 				default:
-					printf("  ignoring ack, invalid result\n");
+					printf("client [%u]: ignoring ack, invalid result\n", client_id);
 					break;
 			}
 			break;
 		case CLIENT_STATE_CONFIG_SENT:
 			switch (ack_result) {
 				case SRF_IP_CONN_ACK_RESULT_CONFIG:
-					printf("  got ack for config\n");
+					printf("client [%u]: got ack for config\n", client_id);
 					client_state_change(CLIENT_STATE_CONNECTED);
 					client_got_valid_packet();
 					break;
 				default:
-					printf("  ignoring ack, invalid result\n");
+					printf("client [%u]: ignoring ack, invalid result\n", client_id);
 					break;
 			}
 			break;
 		case CLIENT_STATE_CONNECTED:
 			switch (ack_result) {
 				case SRF_IP_CONN_ACK_RESULT_CLOSE:
-					printf("  got ack for close\n");
+					printf("client [%u]: got ack for close\n", client_id);
 					client_state_change(CLIENT_STATE_CLOSED);
 					client_got_valid_packet();
 					break;
 				default:
-					printf("  ignoring ack, invalid result\n");
+					printf("client [%u]: ignoring ack, invalid result\n", client_id);
 					break;
 			}
 			break;
 		default:
-			printf("  ignoring ack, we are not in a state where we expect one\n");
+			printf("client [%u]: ignoring ack, we are not in a state where we expect one\n", client_id);
 			break;
 	}
 }
@@ -183,29 +183,29 @@ void client_got_nak(srf_ip_conn_nak_result_t nak_result) {
 		case CLIENT_STATE_AUTH_SENT:
 			switch (nak_result) {
 				case SRF_IP_CONN_NAK_RESULT_AUTH_INVALID_HMAC:
-					printf("  got nak with invalid hmac for auth, retrying in 5 seconds\n");
+					printf("client [%u]: got nak with invalid hmac for auth, retrying in 5 seconds\n", client_id);
 					sleep(5);
 					client_state_change(CLIENT_STATE_INIT);
 					break;
 				case SRF_IP_CONN_NAK_RESULT_AUTH_INVALID_CLIENT_ID:
-					printf("  got nak with invalid client id for login, retrying in 5 seconds\n");
+					printf("client [%u]: got nak with invalid client id for login, retrying in 5 seconds\n", client_id);
 					sleep(5);
 					client_state_change(CLIENT_STATE_INIT);
 					break;
 				case SRF_IP_CONN_NAK_RESULT_AUTH_SERVER_FULL:
-					printf("  got nak with server full for login, retrying in 5 seconds\n");
+					printf("client [%u]: got nak with server full for login, retrying in 5 seconds\n", client_id);
 					sleep(5);
 					client_state_change(CLIENT_STATE_INIT);
 					break;
 				default:
-					printf("  unknown nak, retrying in 5 seconds\n");
+					printf("client [%u]: unknown nak, retrying in 5 seconds\n", client_id);
 					sleep(5);
 					client_state_change(CLIENT_STATE_INIT);
 					break;
 			}
 			break;
 		default:
-			printf("  ignoring nak, we are not in a state where we expect one\n");
+			printf("client [%u]: ignoring nak, we are not in a state where we expect one\n", client_id);
 			break;
 	}
 }
@@ -213,11 +213,11 @@ void client_got_nak(srf_ip_conn_nak_result_t nak_result) {
 void client_got_pong(void) {
 	switch (client_state) {
 		case CLIENT_STATE_CONNECTED:
-			printf("  got pong\n");
+			printf("client [%u]: got pong\n", client_id);
 			client_got_valid_packet();
 			break;
 		default:
-			printf("  ignoring pong, we are not in a state where we expect one\n");
+			printf("client [%u]: ignoring pong, we are not in a state where we expect one\n", client_id);
 			break;
 	}
 }
@@ -226,7 +226,7 @@ static void client_send_ping(void) {
 	srf_ip_conn_packet_t packet;
 	uint8_t i;
 
-	printf("client: sending ping\n");
+	printf("client [%u]: sending ping\n", client_id);
 
 	srf_ip_conn_packet_init(&packet.header, SRF_IP_CONN_PACKET_TYPE_PING);
 	for (i = 0; i < sizeof(packet.ping.random_data); i++)
@@ -240,7 +240,7 @@ void client_send_close(void) {
 	srf_ip_conn_packet_t packet;
 	uint8_t i;
 
-	printf("client: sending close packet\n");
+	printf("client [%u]: sending close packet\n", client_id);
 
 	srf_ip_conn_packet_init(&packet.header, SRF_IP_CONN_PACKET_TYPE_CLOSE);
 	for (i = 0; i < sizeof(packet.close.random_data); i++)
@@ -265,7 +265,7 @@ flag_t client_process(void) {
 		default:
 			// If we didn't received a valid packet for a long time.
 			if (time(NULL)-client_got_last_valid_packet_at > 30) {
-				printf("client: rx timeout\n");
+				printf("client [%u]: rx timeout\n", client_id);
 				client_state_change(CLIENT_STATE_INIT);
 			}
 			break;
