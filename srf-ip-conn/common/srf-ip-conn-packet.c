@@ -44,27 +44,27 @@ flag_t srf_ip_conn_packet_is_header_valid(srf_ip_conn_packet_header_t *packet_he
 	return (memcmp(packet_header->magic, SRF_IP_CONN_MAGIC_STR, SRF_IP_CONN_MAGIC_STR_LENGTH) == 0);
 }
 
-static void srf_ip_conn_packet_hash_calc(uint8_t token[SRF_IP_CONN_TOKEN_LENGTH], char password[SRF_IP_CONN_MAX_PASSWORD_LENGTH], srf_ip_conn_packet_t *packet, uint16_t payload_length, uint8_t dst[SHA256_DIGEST_LENGTH]) {
-	SHA256_CTX ctx256;
+static void srf_ip_conn_packet_hash_calc(uint8_t token[SRF_IP_CONN_TOKEN_LENGTH], char password[SRF_IP_CONN_MAX_PASSWORD_LENGTH], srf_ip_conn_packet_t *packet, uint16_t payload_length, uint8_t dst[SHA256_DIGEST_SIZE]) {
+	sha256_ctx ctx256;
 
-	SHA256_Init(&ctx256);
-	SHA256_Update(&ctx256, token, SRF_IP_CONN_TOKEN_LENGTH);
-	SHA256_Update(&ctx256, (uint8_t *)password, strlen(password));
-	SHA256_Update(&ctx256, (uint8_t *)packet + sizeof(srf_ip_conn_packet_header_t), payload_length-SHA256_DIGEST_LENGTH);
-	SHA256_Final(dst, &ctx256);
+	sha256_init(&ctx256);
+	sha256_update(&ctx256, token, SRF_IP_CONN_TOKEN_LENGTH);
+	sha256_update(&ctx256, (uint8_t *)password, strlen(password));
+	sha256_update(&ctx256, (uint8_t *)packet + sizeof(srf_ip_conn_packet_header_t), payload_length-SHA256_DIGEST_SIZE);
+	sha256_final(&ctx256, dst);
 }
 
-void srf_ip_conn_packet_hmac_add(uint8_t token[SRF_IP_CONN_TOKEN_LENGTH], char password[SRF_IP_CONN_MAX_PASSWORD_LENGTH], srf_ip_conn_packet_t *packet, uint16_t payload_length) {
-	srf_ip_conn_packet_hash_calc(token, password, packet, payload_length, (uint8_t *)packet + sizeof(srf_ip_conn_packet_header_t) + payload_length - SHA256_DIGEST_LENGTH);
+void srf_ip_conn_packet_hmac_add(uint8_t token[SRF_IP_CONN_TOKEN_LENGTH], char *password, srf_ip_conn_packet_t *packet, uint16_t payload_length) {
+	srf_ip_conn_packet_hash_calc(token, password, packet, payload_length, (uint8_t *)packet + sizeof(srf_ip_conn_packet_header_t) + payload_length - SHA256_DIGEST_SIZE);
 }
 
-flag_t srf_ip_conn_packet_hmac_check(uint8_t token[SRF_IP_CONN_TOKEN_LENGTH], char password[SRF_IP_CONN_MAX_PASSWORD_LENGTH], srf_ip_conn_packet_t *packet, uint16_t payload_length) {
-	uint8_t hash[SHA256_DIGEST_LENGTH];
+flag_t srf_ip_conn_packet_hmac_check(uint8_t token[SRF_IP_CONN_TOKEN_LENGTH], char *password, srf_ip_conn_packet_t *packet, uint16_t payload_length) {
+	uint8_t hash[SHA256_DIGEST_SIZE];
 
 	srf_ip_conn_packet_hash_calc(token, password, packet, payload_length, hash);
 
 	// Returning 1 if calculated hash matches HMAC.
-	return (memcmp((uint8_t *)packet + sizeof(srf_ip_conn_packet_header_t) + payload_length - SHA256_DIGEST_LENGTH, hash, SHA256_DIGEST_LENGTH) == 0);
+	return (memcmp((uint8_t *)packet + sizeof(srf_ip_conn_packet_header_t) + payload_length - SHA256_DIGEST_SIZE, hash, SHA256_DIGEST_SIZE) == 0);
 }
 
 void srf_ip_conn_packet_print_data_raw_payload(srf_ip_conn_data_raw_payload_t *payload) {
