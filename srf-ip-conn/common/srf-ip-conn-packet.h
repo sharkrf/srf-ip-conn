@@ -204,7 +204,8 @@ typedef struct __attribute__((packed)) {
     char src_rptr_callsign[8];
     char dst_callsign[8];
     char src_callsign[8];
-    char src_callsign_suffix[8];
+    char src_callsign_suffix[4];
+    uint16_t crc;
 } srf_ip_conn_data_dstar_decoded_header_t;
 
 typedef struct __attribute__((packed)) {
